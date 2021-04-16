@@ -1,0 +1,210 @@
+---
+title: "American National Election Studies (ANES) 2016 Time Series Study Data Prep"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data information
+
+All data and resources were downloaded from https://electionstudies.org/data-center/2016-time-series-study/ on April 3, 2021.
+
+American National Election Studies. 2019. ANES 2016 Time Series Study [dataset and documentation]. September 4, 2019 version. www.electionstudies.org
+```{r loadpackageh, message=FALSE}
+library(here) #easy relative paths
+```
+
+
+
+```{r loadpackages}
+library(tidyverse) #data manipulation
+library(haven) #data import
+library(tidylog) #informative logging messages
+```
+## Import data and create derived variables
+
+```{r derivedata}
+anes_in <- read_sav(here("RawData", "ANES_2016", "anes_timeseries_2016.sav"))
+
+
+anes <- anes_in %>%
+   select('V160102',	'V160201',	'V160202',	'V160501',	'V161004',	'V161005',	'V161006',	'V161024x', 'V161158x',	'V161215',	'V161219',	'V161267',	'V161267',	'V161270',	'V161310x',	'V161342',	'V161361x',	'V162031',	'V162031x',	'V162034',	'V162034a',	'V162062x',	'V162062x'
+   ) %>%
+   mutate(
+      InterviewMode=fct_recode(as.character(V160501), FTF="1", Web="2"),
+      Weight=V160102,
+      Stratum=as.factor(V160201),
+      VarUnit=as.factor(V160202),
+      Age=if_else(V161267>0, as.numeric(V161267), NA_real_),
+      AgeGroup=cut(Age, c(17, 29, 39, 49, 59, 69, 200),
+                   labels=c("18-29", "30-39", "40-49", "50-59", "60-69", "70 or older")),
+      Gender=factor(
+         case_when(
+            V161342==1~"Male",
+            V161342==2~"Female",
+            V161342==3~"Other",
+            TRUE~NA_character_
+         ),
+         levels=c("Male", "Female", "Other")
+      ),
+      RaceEth=factor(
+         case_when(
+            V161310x==1~"White",
+            V161310x==2~"Black",
+            V161310x==5~"Hispanic",
+            V161310x==3~"Asian, NH/PI",
+            near(V161310x, 4)~"AI/AN",
+            near(V161310x, 6)~"Other/multiple race",
+            TRUE ~ NA_character_
+         ),
+         levels=c("White", "Black", "Hispanic", "Asian, NH/PI", "AI/AN", "Other/multiple race", NA_character_)
+      ),
+      PartyID=factor(
+         case_when(
+            V161158x==1~"Strong democrat",
+            V161158x==2~"Not very strong democrat",
+            V161158x==3~"Independent-democrat",
+            V161158x==4~"Independent",
+            V161158x==5~"Independent-republican",
+            V161158x==6~"Not very strong republican",
+            V161158x==7~"Strong republican",
+            TRUE ~ NA_character_
+         ),
+         levels=c("Strong democrat", "Not very strong democrat", "Independent-democrat", "Independent", "Independent-republican", "Not very strong republican", "Strong republican")
+      ),
+      Education=factor(
+         case_when(
+            V161270 <=0~NA_character_,
+            V161270 <= 8~"Less than HS",
+            V161270==9|V161270==90~"High school",
+            V161270<=12~"Post HS",
+            V161270==13~"Bachelor's",
+            V161270<=16~"Graduate",
+            TRUE~NA_character_
+         ),
+         levels=c("Less than HS", "High school", "Post HS", "Bachelor's", "Graduate")
+      ),
+      Income=cut(V161361x, c(-5, 1:28),
+                 labels=c("Under $5k", 
+                          "$5-10k", "$10-12.5k", "$12.5-15", "$15-17.5k", "$17.5-20k", "$20-22.5k", "$22.5-25k", "$25-27.5k", "$27.5-30k", "$30-35k", "$35-40k", "$40-45k", "$45-50k", "$50-55k", "$55-60k", "$60-65k","$65-70k", "$70-75k", "$75-80k", "$80-90k", "$90-100k","$100-110k", "$110-125k", "$125-150k", "$150-175k", "$175-250k", "$250k or more"  )
+      ), 
+      Income7=fct_collapse(
+         Income,
+         "Under $20k"=c("Under $5k", "$5-10k", "$10-12.5k", "$12.5-15", "$15-17.5k", "$17.5-20k"),
+         "$20-40k"=c("$20-22.5k", "$22.5-25k", "$25-27.5k", "$27.5-30k", "$30-35k", "$35-40k"),
+         "$40-60k"=c( "$40-45k", "$45-50k", "$50-55k", "$55-60k"),
+         "$60-80k"=c( "$60-65k", "$65-70k", "$70-75k", "$75-80k"),
+         "$80-100k"=c("$80-90k", "$90-100k"),
+         "$100-125k"=c("$100-110k", "$110-125k"),
+         "$125k or more"=c("$125-150k", "$150-175k", "$175-250k", "$250k or more")
+      ),
+      CampaignInterest=factor(
+         case_when(
+            V161004==1~"Very much interested",
+            V161004==2~"Somewhat interested",
+            V161004==3~"Not much interested",
+            TRUE~NA_character_
+         ),
+         levels=c("Very much interested", "Somewhat interested", "Not much interested")
+      ),
+      TrustGovernment=factor(
+         case_when(
+            V161215==1~"Always",
+            V161215==2~"Most of the time",
+            V161215==3~"About half the time",
+            V161215==4~"Some of the time",
+            V161215==5~"Never",
+            TRUE~NA_character_
+         ),
+         levels=c("Always", "Most of the time", "About half the time", "Some of the time", "Never")
+      ),
+      TrustPeople=factor(
+         case_when(
+            V161219==1~"Always",
+            V161219==2~"Most of the time",
+            V161219==3~"About half the time",
+            V161219==4~"Some of the time",
+            V161219==5~"Never",
+            TRUE ~ NA_character_
+         ),
+         levels=c("Always", "Most of the time", "About half the time", "Some of the time", "Never")
+      ),
+      VotedPres2012=factor(
+         case_when(
+            V161005==1~"Yes",
+            V161005==2~"No",
+            TRUE~NA_character_
+         ), levels=c("Yes", "No")
+      ),
+      VotedPres2012_selection=factor(
+         case_when(
+            V161006==1~"Obama",
+            V161006==2~"Romney",
+            V161006==5~"Other",
+            TRUE~NA_character_
+         ), levels=c("Obama", "Romney", "Other")
+      ),
+      VotedPres2016=factor(
+         case_when(
+            V162031x==1~"Yes",
+            V162031x==0~"No",
+            TRUE~NA_character_
+         ), levels=c("Yes", "No")
+      ),
+      VotedPres2016_selection=factor(
+         case_when(
+            V162062x==1~"Clinton",
+            V162062x==2~"Trump",
+            V162062x >=3 ~"Other",
+            TRUE~NA_character_
+         ), levels=c("Clinton", "Trump", "Other")
+      ),
+      EarlyVote2016=factor(
+         case_when(
+            V161024x==4~"Yes",
+            VotedPres2016=="Yes"~"No",
+            TRUE~NA_character_
+         ), levels=c("Yes", "No")
+      )
+   )
+   
+
+
+summary(anes)
+```
+
+
+## Check derived variables for correct coding
+
+```{r checkvars}
+
+anes %>% count(InterviewMode, V160501)
+anes %>% group_by(AgeGroup) %>% summarise(minAge=min(Age), maxAge=max(Age), minV=min(V161267), maxV=max(V161267))
+anes %>% count(Gender, V161342)
+anes %>% count(RaceEth, V161310x)
+anes %>% count(PartyID, V161158x)
+anes %>% count(Education, V161270)
+anes %>% count(Income, Income7, V161361x) %>% print(n=30)
+anes %>% count(CampaignInterest, V161004)
+anes %>% count(TrustGovernment, V161215)
+anes %>% count(TrustPeople, V161219)
+anes %>% count(VotedPres2012, V161005)
+anes %>% count(VotedPres2012_selection, V161006)
+anes %>% count(VotedPres2016, V162031x)
+anes %>% count(VotedPres2016_selection, V162062x)
+anes %>% count(EarlyVote2016, V161024x, VotedPres2016)
+
+anes %>%
+   summarise(WtSum=sum(Weight)) %>%
+   pull(WtSum)
+
+```
+## Save data
+
+```{r savedat}
+write_rds(anes, here("Data", "anes.rds"), compress="gz")
+```
+
+

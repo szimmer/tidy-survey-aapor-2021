@@ -1,0 +1,1304 @@
+---
+title: "Tidy Survey Analysis in R using the srvyr Package"
+subtitle: "AAPOR 2021 Short Course"
+author:
+   - Stephanie Zimmer, RTI International
+   - Rebecca Powell, RTI International
+date: "2021-05-06"
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, tidy = FALSE)
+```
+
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#1E4F96",
+  secondary_color = "#00A3E0",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+class: inverse center middle
+# Introduction
+
+---
+
+```{css, echo = FALSE}
+.small .remark-code { /*Change made here*/
+  font-size: 80% !important;
+}
+.smaller .remark-code { /*Change made here*/
+  font-size: 70% !important;
+}
+```
+
+## Overview
+
+- At the end of this course, you should be able to 
+  - Calculate point estimates and their standard errors with survey data 
+      - Means & Proportions
+      - Totals
+      - Quantiles
+  - Perform t-tests and chi-squared tests
+  - Fit regression models
+  - Specify a survey design in R to create a survey object
+  
+- We will not be going over the following but provide some resources at the end
+  - Weighting (calibration, post-stratification, raking, etc.)
+  - Survival analysis
+  - Nonlinear models
+
+
+
+---
+## Overview: Course Roadmap
+
+- Get familiar with RStudio Cloud with a warm-up exercise using the tidyverse
+
+- Introduce the survey data we'll be using in the course
+
+- Analysis of continuous data with time for practice
+
+- Analysis of categorical data with time for practice
+
+- Specify a survey design object in R with exercises
+
+- Resources for other survey analysis topics
+
+- Closing
+
+---
+## Logistics
+
+- We will be using RStudio Cloud today to ensure everyone has access
+
+    - Sign-up for a free RStudio Cloud account 
+    - Access the project and files via link in email and Zoom chat
+    - Click "START" to open the project and get started
+    - Rstudio Cloud has the same features and appearance as RStudio for ease of use
+
+- All slides and code are available on GitHub: https://github.com/szimmer/tidy-survey-aapor-2021
+
+???
+Github repo is for future reference, all material on RStudio cloud
+---
+## Intro to RStudio Cloud: Penguins!!
+
+- Using `palmerpenguins` data for warm-up exercises
+
+- Data were collected and made available by Dr. Kristen Gorman and the Palmer Station, Antarctica LTER, a member of the Long Term Ecological Research Network.
+
+- Access data through `palmerpenguins` package https://github.com/allisonhorst/palmerpenguins/
+
+
+####If you are using your own RStudio environment:
+- Make sure you have `tidyverse`, `here`, and `palmerpenguins` installed
+
+```{r inst_packages, error=FALSE, warning=FALSE, eval=FALSE}
+# Run package installation if you don't have these packages already
+# As a reminder, installing takes package from internet to your computer 
+# and only needs to be done once, not each session
+
+install.packages(c("tidyverse", "here", "palmerpenguins"))
+```
+
+---
+## Intro to RStudio Cloud: Penguins!!
+
+- Load `tidyverse`, `here`, and `palmerpenguins`
+
+- Look at the penguins dataset using `glimpse`
+
+```{r load_pack1, error=FALSE, warning=FALSE}
+library(tidyverse) # for tidyverse
+library(here) # for file paths
+library(palmerpenguins) # for warm-up data
+glimpse(penguins)
+```
+
+---
+## Warm-up Exercises: WarmUpExercises.Rmd
+
+- <b>Let's open RStudio cloud and do some warm-up examples</b>
+  - We will do one together and then give you 5-minutes to work through other examples and get familiar with RStudio Cloud
+
+- Explore the penguins data
+  - How many penguins of each species are there? <i>We will do this one together</i>
+  - How many penguins of each species and sex are there? Hint: use `count`
+  - What is the mean length of flipper by species? Hint: use `group_by` and `summarize`
+  - What is the mean flipper length by species and sex? 
+
+- More advanced warm-up
+  - Fit a simple linear regression between body mass and flipper length.
+  - Test whether the average flipper length is significantly different between male and female penguins. Use t-test, lm, or glm
+
+---
+## Ex. 1: How many penguins of each species are there? 
+
+```{r peng1}
+penguins %>%
+   count(species)
+```
+
+???
+- Using `count` we see there are 3 different species and the number of penguins for each species
+---
+## Ex. 2: How many penguins of each species and sex are there?
+
+```{r peng2}
+penguins %>%
+   count(species, sex)
+```
+???
+- `count` can take more than one variable to get a cross-tabs between the two variables
+
+---
+## Ex. 3: What is the mean length of flipper by species? 
+
+```{r peng3}
+penguins %>%
+   group_by(species) %>%
+   summarize(
+     MeanFlipperLength=mean(flipper_length_mm, 
+                            na.rm=TRUE))
+```
+???
+- `group_by` allows us to look at metrics by different subgroups like species
+- when using `group_by` follow it with `summarize` to get metrics (like average) at the group level
+- `na.rm=TRUE` removes missing data from the calculation
+    - forgetting this argument will result in a value of `NA` as the function will try to average missing data
+
+---
+## Ex. 4: What is the mean flipper length by species and sex?
+
+```{r peng4}
+penguins %>%
+   group_by(species, sex) %>%
+   summarize(
+     MeanFlipperLength=mean(flipper_length_mm,
+                            na.rm=TRUE))
+```
+???
+- As with `count`, you can `group_by` multiple variables
+
+---
+## Advanced Ex. 1: Linear regression (body mass & flipper length)
+.small[
+```{r pengad1}
+mod1 <- lm(body_mass_g ~ flipper_length_mm, data=penguins)
+summary(mod1)
+```
+]
+???
+- use `lm` (linear model) function
+- equation is written as y-variable ~ x-variables
+
+---
+## Advanced Ex. 2: Flipper length differences by sex: t-test
+
+```{r pengad2a}
+t.test(flipper_length_mm ~ sex, data=penguins)
+```
+???
+- ~ also used in `t.test` to separate what we want to measure (our y) and the groups of interest (our x)
+---
+## Advanced Ex. 2: Flipper length differences by sex: lm 
+.small[
+```{r pengad2b}
+mod3 <- lm(flipper_length_mm ~ sex, data=penguins)
+summary(mod3)
+```
+]
+---
+## Advanced Ex. 2: Flipper length differences by sex: glm 
+.small[
+```{r pengad2c}
+mod4 <- glm(flipper_length_mm ~ sex, data=penguins)
+summary(mod4)
+```
+]
+???
+- `glm` takes the same arguments as `lm`, but is more flexible for working with non-normal data
+---
+class: inverse center middle
+# Survey Datasets
+---
+## Residential Energy Consumption Survey (RECS) 2015
+
+- Energy consumption/expenditures collected through energy suppliers
+
+- Fielded 14 times between 1950 and 2015
+
+- Topics include appliances, electronics, heating, a/c, temperatures, water heating, lighting, energy bills, respondent demographics, and energy assistance
+
+- Funded by the Energy Information Administration
+
+- <b>Target Population</b>: Primary occupied housing units in the US
+
+- <b>Mode</b>: In-person, paper, and web interview mode
+
+- <b>Sample Information</b>: BRR Replicate weights included for variance estimation
+
+https://www.eia.gov/consumption/residential/index.php
+
+???
+- We have subset the columns of this data and created derived variables, code in repository
+---
+## American National Election Studies (ANES) 2016 
+
+- Pre and post election surveys
+
+- Fielded almost every 2 years since 1948
+
+- Topics include voter registration status, candidate preference, opinions on country and government, party and ideology affiliation, opinions on policy, news sources, and more
+
+- Collaboration of Stanford, University of Michigan - funding by the National Science Foundation
+
+- <b>Target Population</b>: US citizens, 18 and older living in US 
+
+- <b>Mode</b>: FTF with CASI and Web
+
+- <b>Sample Information</b>: Pseudo-strata and pseudo-cluster included for variance estimation
+
+https://electionstudies.org/
+
+???
+Chose not to use 2020 data because it is still preliminary
+
+---
+class: inverse center middle
+# Continuous data analysis
+---
+## Overview of Survey Analysis using `srvyr` Package
+
+1. Create a `tbl_svy` object using: `as_survey_design` or `as_survey_rep`
+
+2. Subset data (if needed) using `filter` (subpopulations)
+
+3. Specify domains of analysis using `group_by` 
+
+4. Within `summarize`, specify variables to calculate including means, totals, proportions, quantiles and more
+
+
+<b>Note: We will be teaching this in the reverse order!!!</b>
+---
+## Set-up for Analysis
+- `srvyr` package uses tidy-syntax but uses the `survey` package behind it to do calculations
+
+- If using your own RStudio environment, install both packages:
+```{r inst_srv, eval=FALSE}
+# Install survey and srvyr packages
+
+remotes::install_github("bschneidr/survey", ref = "c217689")
+install.packages("srvyr")
+```
+
+- First, we will set-up a design object and later talk about what it means
+```{r recs_des, error=FALSE, warning=FALSE}
+library(survey) # for survey analysis
+library(srvyr) # for tidy survey analysis
+
+recs <- read_rds(here("Data", "recs.rds"))
+
+recs_des <- recs %>%
+   as_survey_rep(weights=NWEIGHT,
+                 repweights=starts_with("BRRWT"),
+                 type="Fay",
+                 rho=0.5,
+                 mse=TRUE)
+
+```
+???
+- need to install github version of survey package if you want CIs with quantiles
+---
+## Weighted Analysis for Continuous Variables
+
+- Common functions for continuous summaries
+   - survey_mean
+   - survey_total (like sum)
+   - survey_median
+   - survey_quantile
+   - survey_ratio
+
+- Always call within `summarize`/`summarise`
+---
+## `survey_mean` Syntax
+
+```{r survey_mean_syn, eval=FALSE}
+survey_mean(
+  x,
+  na.rm = FALSE,
+  vartype = c("se", "ci", "var", "cv"),
+  level = 0.95,
+  proportion = FALSE,
+  deff = FALSE,
+  df = NULL,
+  ...
+)
+```
+
+To calculate a survey mean, we use this in `summarize`/`summarise`
+```{r survey_mean_syn2, eval=FALSE}
+survey_design_object %>%
+   summarize(
+      mean_varname=survey_mean(x = continuous_varname)
+      )
+```
+
+???
+Only required argument is the variable
+
+---
+## `survey_mean` Example 1: Mean dollars spent on energy
+
+This is an example using the `recs_des` survey design object and `survey_mean` function defaults
+
+```{r survey_mean_ex1}
+recs_des %>%
+   summarize(
+      TD_mean=survey_mean(x = TOTALDOL)
+      )
+```
+---
+## `survey_mean` Example 2: Mean temperature setting for summer during the day
+
+Run this code. What happens? Why?
+
+```{r survey_mean_ex2, eval=FALSE}
+recs_des %>%
+   summarize(
+      TD_mean=survey_mean(x = SummerTempDay)
+      )
+```
+---
+## `survey_mean` Example 2: Mean temperature setting for summer during the day
+
+Run this code. What happens? Why?
+
+```{r survey_mean_ex2_r, error=TRUE}
+recs_des %>%
+   summarize(
+      TD_mean=survey_mean(x = SummerTempDay)
+      )
+```
+
+<b>How do we fix this code?</b>
+
+???
+- missing data in temperature, need `na.rm=TRUE`
+---
+## `survey_mean` Example 2: Missing data solution
+
+```{r survey_mean_ex2_sol, error=TRUE, tidy=FALSE}
+recs_des %>%
+   summarize(
+      TD_mean = survey_mean(
+        x = SummerTempDay, 
+        na.rm = TRUE )#<<
+      )
+```
+
+---
+## `survey_median` Syntax
+
+```{r survey_median_syn, eval=FALSE}
+survey_median(
+  x,
+  na.rm = FALSE,
+  vartype = c("se", "ci"),
+  level = 0.95,
+  df = NULL,
+  ...
+)
+```
+
+???
+Only required argument is the variable
+
+
+---
+## `survey_median` Example: Median temperature setting for summer during day
+
+Fill in the blank:
+
+```{r survey_median_fib, eval=FALSE}
+recs_des %>%
+   summarize(
+      TD_median=survey_median(x=_________,
+                          na.rm=_________)
+      )
+```
+
+--
+
+```{r survey_median_fib_sol}
+recs_des %>%
+   summarize(
+      TD_median=survey_median(x=SummerTempDay,
+                              na.rm=TRUE)
+      )
+```
+
+
+
+---
+## `survey_quantile` Syntax
+
+```{r survey_quantile_syn, eval=FALSE}
+survey_quantile(
+  x,
+  quantiles, #<<
+  na.rm = FALSE,
+  vartype = c("se", "ci", "var", "cv"),
+  level = 0.95,
+  df = NULL,
+  ...
+)
+```
+
+???
+- need both the variable and the quantiles in a vector e.g. (c(.25, .75))
+---
+## `survey_quantile` Example 1: 1st and 3rd quantile of dollars spent on energy
+
+```{r survey_quantile_ex1, error=TRUE}
+recs_des %>%
+   summarize(
+      Spent=survey_quantile(
+        x = TOTALDOL,
+        quantiles = c(.25, .75)) #<<
+      )
+```
+???
+- This estimates the 25th and 75th percentile
+
+---
+## `survey_quantile` Example 2: 1st and 3rd quantile of dollars spent on energy now with confidence interval
+
+```{r survey_quantile_ex2, error=TRUE}
+recs_des %>%
+   summarize(
+      Spent=survey_quantile(x = TOTALDOL,
+                            quantiles = c(.25, .75),
+                            vartype = "ci" #<<
+         )
+      )
+```
+---
+## `survey_ratio` Syntax
+
+- Note this estimates: $\sum x_i/\sum y_i$ not $\sum \frac{x_i}{y_i}$
+
+```{r survey_ratio_syn, eval=FALSE}
+survey_ratio(
+  numerator, #<<
+  denominator, #<<
+  na.rm = FALSE,
+  vartype = c("se", "ci", "var", "cv"),
+  level = 0.95,
+  deff = FALSE,
+  df = NULL,
+  ...
+)
+```
+
+
+---
+## `survey_ratio` Example: mean dollars per BTU spent on energy
+
+```{r survey_ratio_ex}
+recs_des %>%
+   summarize(
+      DolPerBTU=survey_ratio(
+         numerator = TOTALDOL, #<<
+         denominator = TOTALBTU, #<<
+         na.rm = TRUE
+         )
+      )
+```
+---
+## Practice on your own
+
+- Open ContinuousExercises.Rmd and work through Part 1
+
+- We will take 15 minutes. Use this time for the exercises and a break
+---
+## Weighted Analysis for Continuous Variables: Domain Analysis
+
+- If we want to get estimates by another variable, we need to add a `group_by` statement before doing the analysis.
+
+- Example: Average dollars spent on electricity by whether AC is used
+
+```{r domain_ex}
+recs_des %>%
+  group_by(ACUsed) %>% #<<
+  summarize(
+    ElBill=survey_mean(DOLLAREL, 
+                       na.rm=TRUE)
+  )
+```
+---
+## Domain Analysis: Totals
+
+- If we want the overall electric bill too, use the `cascade` function instead of `summarize`
+
+```{r domain_ex_casc}
+recs_des %>%
+   group_by(ACUsed) %>%
+   cascade(
+      ElBill=survey_mean(DOLLAREL, 
+                         na.rm=TRUE)
+   )
+
+```
+
+???
+- Note the overall appears as NA
+
+---
+## Domain Analysis: Totals
+
+- Also can add sample and pop sizes
+
+```{r domain_tot}
+recs_des %>%
+   group_by(ACUsed) %>%
+   cascade(
+      ElBill=survey_mean(DOLLAREL, na.rm=TRUE),
+      N=survey_total(!is.na(DOLLAREL)), #<<
+      n=unweighted(sum(!is.na(DOLLAREL))) #<<
+   )
+
+```
+
+???
+- survey_total gets a weighted total
+- unweighted does just that, an unweighted estimate, can also get an unweighted mean or any other stat
+
+---
+## Weighted Analysis for Specific Subpopulations
+
+- filtering (subsetting) the data should be done AFTER specifying the design to ensure accurate standard errors
+
+- Use the `filter` function after creating the survey design object and before summarizing
+
+Wrong way:
+```{r filter_bad, eval = FALSE}
+data %>%
+  filter(state=="NC") %>% #<<
+  as_survey_design(...) %>%
+  summarize(AvgAge=mean(Age))
+```
+
+Right way:
+```{r filter_good, eval=FALSE}
+data %>%
+  as_survey_design(...) %>%
+  filter(state=="NC") %>% #<<
+  summarize(AvgAge=mean(Age))
+```
+
+???
+- The difference in these two methods occurs when the subpopulation doesn't occur in all strata or PSUs
+
+---
+## Subpopulation Example 1: Average electric cost of single family homes
+
+```{r subpop1}
+recs_des %>%
+  filter(HousingUnitType %in% c("Single-family detached",
+                                "Single-family attached")) %>%
+  summarize(
+    ElBill=survey_mean(DOLLAREL, 
+                       na.rm=TRUE)
+  )
+```
+
+---
+## Comparisons with t-tests: `svyttest` Syntax
+
+- t-tests are done in the package `survey` not `srvyr` but you can use the same design object
+
+```{r ttest_syn, eval=FALSE}
+svyttest(formula, # outcome~group for two-sample, outcome~0 for one-sample
+         design,
+         na.rm = FALSE
+         ....)
+```
+
+???
+- Uses standard R formula notation
+- will go over examples of 1-sample, 2-sample, and paired t-test
+
+---
+## `svyttest` Example 1: One-sample t-test
+
+- I keep my house at 68 degrees at night during the summer. Is this different from the national average?
+
+```{r ttest_ex1}
+recs_des %>%
+   svyttest(design=.,
+            formula=I(SummerTempNight-68)~0,
+            na.rm=TRUE)
+```
+
+???
+- Note the I notation, this does the arithmetic before modeling
+
+---
+## `svyttest` Example 2: Comparing two variables
+
+- Do people keep their house the same temperature at night during the summer and the winter?
+
+```{r ttest_ex2}
+recs_des %>%
+   svyttest(design=.,
+            formula=I(SummerTempNight-WinterTempNight)~0,
+            na.rm=TRUE)
+```
+
+???
+- this is a paired t-test
+- testing whether the difference is 0 for each household
+---
+## `svyttest` Example 3: Two-sample t-test
+
+- Are electric bills different between those with and without A/C?
+
+```{r ttest_ex3}
+recs_des %>%
+   svyttest(design=.,
+            formula=DOLLAREL~ACUsed,
+            na.rm=TRUE)
+```
+
+
+
+---
+## Linear Regression or ANOVA: `svyglm` Syntax
+
+- As with t-tests, regressions are done in the package `survey` not `srvyr` but you can use the same design object
+
+- Syntax is similar between t-test and glm
+
+```{r glm_syn, eval=FALSE}
+svyglm(formula, 
+       design,
+       na.action, #default is na.omit
+       ....)
+```
+---
+## `svyglm` Example: Two-sample
+
+Same example as two-sample t-test: Are electric bills different between those with and without A/C?
+
+<b>t-test:</b>
+```{r twosamp_ex_ttest, eval=FALSE}
+recs_des %>%
+   svyttest(design=.,
+            formula=DOLLAREL~ACUsed,
+            na.rm=TRUE) #<<
+```
+
+<b>glm:</b>
+```{r twosamp_ex_glm, eval=FALSE}
+recs_des %>%
+   svyglm(design=.,
+          formula=DOLLAREL~ACUsed,
+          na.action=na.omit) #<<
+```
+
+???
+- one major difference in how you specify to ignore NA values
+- svyttest can only have 2-levels in group variable
+- svyglm, the variable on right can be anything (continuous or factor)
+
+---
+## `svyglm` Example: Two-sample
+
+Are electric bills different between those with and without A/C?
+.small[
+```{r twosamp_ex_ttest_run}
+recs_des %>%
+   svyglm(design=.,
+          formula=DOLLAREL~ACUsed,
+          na.action=na.omit) %>%
+  summary()
+```
+]
+
+???
+- same results as t-test
+
+---
+## `svyglm` Example 1: ANOVA Test
+
+Does temperature of AC at night vary by region?
+.smaller[
+```{r anova_ex}
+recs_des %>%
+   svyglm(design=.,
+          formula=SummerTempNight~Region,
+          na.action=na.omit) %>%
+  summary()
+
+```
+]
+
+???
+- Region is a factor variable, if it is numeric - this will treat it like a linear model
+
+---
+## `svyglm` Example 2: Linear Model
+
+- Is there a relationship between square footage and electric bill?
+- Let's review the data first with a ggplot. <i>Note we use the original data and do <b>NOT</b> use the survey design object.</i>
+
+```{r plot_sf_elbill}
+p <- recs %>%
+  ggplot(aes(x=TOTSQFT_EN, y=DOLLAREL, weight=NWEIGHT)) +
+  geom_hex() + 
+  theme(legend.position="right") +
+  guides(fill=guide_legend(title="HUs"))
+```
+---
+## `svyglm` Example 2: Linear Model
+```{r plot_sf_elbill_disp, echo=FALSE, fig.asp=9/16, fig.align="center", out.width="90%", dpi=300}
+p +
+   theme_xaringan() 
+```
+
+
+---
+## `svyglm` Example 2: Linear Model
+.small[
+```{r lm_ex}
+m_electric_sqft <- recs_des %>%
+   svyglm(design=.,
+          formula=DOLLAREL~TOTSQFT_EN,
+          na.action=na.omit)
+summary(m_electric_sqft)
+```
+]
+
+???
+- for every square foot bigger, on average 24.6c more in electric
+---
+## Practice on your own
+
+- Open ContinuousExercises.Rmd and work through Part 2
+
+- We will take 15 minutes. Use this time for the exercises and a break
+---
+class: inverse center middle
+# Categorical data analysis
+---
+## Weighted Analysis for Categorical Variable
+
+- Functions to use within `summarize` after `group_by`
+   - survey_mean
+   - survey_total
+
+- Functions to get counts
+  - survey_count
+
+???
+
+- we use the same mean and total functions as with continuous variables
+- `survey_count` is new
+    - has a similar structure as the standard (non-survey) version of count
+
+---
+## Set-up ANES Data for Examples
+
+```{r anes_des}
+anes <- read_rds(here("Data", "anes.rds")) %>%
+   mutate(Weight=Weight/sum(Weight)*224059005) 
+# adjust weight to sum to citizen pop, 18+ in Nov 2016 per ANES methodology documentation
+anes_des <- anes %>%
+   as_survey_design(weights = Weight,
+                    strata = Stratum,
+                    ids = VarUnit,
+                    nest = TRUE)
+
+```
+???
+
+- American National Election Studies
+- provides weights that sum to the sample, but we want to get population estimates
+    - need to adjust the weight to get it to the population count
+- as we mentioned before we will cover setting up the sample design object later
+
+---
+## `survey_count` Syntax
+
+- `survey_count` functions similarly to `count` in that it is <b>NOT</b> called within `summarize`
+
+- Produces weighted counts and variance of your choice of those counts
+```{r survey_count_syn, eval=FALSE}
+survey_count(
+  x,
+  ...,
+  wt = NULL,
+  sort = FALSE,
+  name = "n",
+  .drop = dplyr::group_by_drop_default(x),
+  vartype = c("se", "ci", "var", "cv")
+)
+```
+???
+- similar to count in that it takes one or many variables
+- can change the variance type as we have seen in the other survey functions
+
+---
+## `survey_count` Example
+
+- Cross-tab of population in each age group and gender
+```{r survey_count_ex}
+anes_des %>%
+  survey_count(AgeGroup, Gender, name="n")
+
+```
+???
+- `survey_count` is placed on its own like `count`
+- it does NOT go in a `summarize` function
+- can take multiple variables
+- can change the output count name, `n` is the default
+
+---
+## `survey_mean` and `survey_total` Examples
+
+- `survey_mean` used with no x (variable) calculates a proportion of groups specified in `group_by`
+- `survey_total` used with no x (variable) calculates a population count estimate for the groups specified in `group_by`
+
+Cross-tab of population who voted in 2016
+```{r survey_p_ex1}
+anes_des %>%
+  filter(!is.na(VotedPres2016)) %>%
+  group_by(VotedPres2016) %>%
+  summarize(
+    p=survey_mean(),
+    N=survey_total(),
+    n=unweighted(n()), .groups="drop"
+  )
+```
+???
+- to get proportions we use `group_by` and `survey_mean`
+- also use `survey_total` to get a population count estimate as before
+---
+## Conditional proportions with more than one group
+
+- Specifying more than one group calculates conditional proportions
+- Example: people voting in 2012 and 2016
+
+```{r survey_p_cond}
+anes_des %>%
+  filter(!is.na(VotedPres2012), !is.na(VotedPres2016)) %>%
+  group_by(VotedPres2012, VotedPres2016) %>%
+  summarize(
+    p=survey_mean(),
+    N=survey_total(),
+    n=unweighted(n()), .groups="drop"
+  )
+```
+???
+- Note that this is the proportion of voting in 2016 by whether people voted in 2012
+- What if we don't want conditional proportions?
+
+---
+## Joint proportions with more than one group
+
+- Specify an interaction to get joint distribution
+- Example: people voting in 2012 and 2016
+
+```{r survey_p_joint}
+anes_des %>%
+  filter(!is.na(VotedPres2012), !is.na(VotedPres2016)) %>%
+  group_by(groups = interaction(VotedPres2016, VotedPres2012)) %>% #<<
+  summarize(
+    p=survey_mean(),
+    N=survey_total(),
+    .groups="drop"
+  )
+```
+???
+- We add an interaction for the groups
+- This outputs the joint distribution, but the `groups` variable is hard to interpret
+
+---
+## Joint proportions with more than one group
+
+- Specify an interaction to get joint distribution
+- Example: people voting in 2012 and 2016
+
+```{r survey_p_joint2}
+anes_des %>%
+  filter(!is.na(VotedPres2012), !is.na(VotedPres2016)) %>%
+  group_by(groups = interaction(VotedPres2016, VotedPres2012)) %>% 
+  summarize(
+    VotedPres2012=VotedPres2012[1], #<<
+    VotedPres2016=VotedPres2016[1], #<<
+    p=survey_mean(),
+    N=survey_total(),
+    .groups="drop"
+  )
+```
+???
+- We can add in two variables one for `VotedPres2012` and `VotedPres2016`
+- using the 1 in brackets pulls out the labels for these two variables so we see the "Yes" and "No" labels
+
+---
+## Proportions with Design Effects
+
+```{r survey_p_deff}
+anes_des %>%
+  filter(!is.na(VotedPres2012), !is.na(VotedPres2016)) %>%
+  group_by(VotedPres2012, VotedPres2016) %>%
+  summarize(
+    p=survey_mean(deff=TRUE),
+    N=survey_total()
+  )
+```
+???
+- Use `deff=TRUE` option in the `survey_mean` function
+
+---
+## `svychisq` Syntax
+
+- As with testing on continuous variables, `svychisq` comes from the `survey` package
+
+```{r svychisq_syn, eval=FALSE}
+svychisq(formula,
+         design, 
+         statistic = c("F",  "Chisq", "Wald", "adjWald", "lincom", "saddlepoint"),
+         na.rm=TRUE,
+         ...)
+                       
+```
+???
+- when we want to test categorical distributions we use `svychisq`
+- it takes a formula, and the survey design data
+
+---
+## `svychisq` Example 1: Function Defaults
+
+- How often can you trust the federal gov't to do what is right?
+- How often can you trust other people?
+
+```{r svychisq_ex1}
+anes_des %>%
+   svychisq(design=.,
+            formula=~TrustPeople +TrustGovernment)
+
+
+```
+???
+- We want to compare the distributions of these two questions
+
+---
+## `svychisq` Example 2: Wald Statistic
+
+- How often can you trust the federal gov't to do what is right?
+- Who did you vote for? Clinton, Trump, or Other
+
+```{r svychisq_ex2}
+anes_des %>%
+   svychisq(design=.,
+            formula=~TrustGovernment +VotedPres2016_selection,
+            statistic="Wald")
+
+
+```
+???
+- Can use different statistics
+---
+## Practice on your own
+
+- Open CategoricalExercises.Rmd and work through the exercises
+
+- We will take 10 minutes. Use this time for the exercises and a break
+---
+class: inverse center middle
+# Sample design object
+---
+## `tbl_svy` Object: Taylor's Series
+
+- `tbl_svy` object defines the sampling design or replicate weights
+
+- Key information is usually found in documentation of a public use file
+
+```{r sd_tsl_syn, eval=FALSE}
+as_survey_design(
+  .data,
+  ids = NULL,#cluster IDs/PSUs
+  strata = NULL,#strata variables
+  variables = NULL,#defaults to all in .data
+  fpc = NULL,#variables defining the fpc
+  nest = FALSE,#TRUE/FALSE - relabel clusters to nest within strata
+  check_strata = !nest, #check that clusters are nested in strata
+  weights = NULL,# weight variable
+  ...
+)
+```
+
+???
+- discussing TSL first
+---
+## `tbl_svy` for Common Designs
+
+```{r sd_tsl_gen_ex, eval=FALSE}
+# simple random sample (SRS)
+apisrs %>% as_survey_design(fpc = fpc)
+
+# stratified sample
+apistrat %>% as_survey_design(strata = stype, weights = pw)
+
+# one-stage cluster sample
+apiclus1 %>% as_survey_design(ids = dnum, weights = pw, fpc = fpc)
+
+# two-stage cluster sample, weights computed from pop size
+apiclus2 %>% as_survey_design(ids = c(dnum, snum), fpc = c(fpc1, fpc2))
+
+# stratified, cluster design
+apistrat %>% as_survey_design(ids = dnum, strata = stype, weights =pw, nest = TRUE)
+
+```
+
+- examples from `srvyr` help documentation
+
+---
+## ANES Design Object
+
+.smaller[
+```{r sd_anes, eval=TRUE}
+anes_des <- anes %>%
+   as_survey_design(weights = Weight,
+                    strata = Stratum,
+                    ids = VarUnit,
+                    nest = TRUE)
+summary(anes_des)
+```
+]
+
+???
+- Pseudo-strata (Stratum) and pseudo-cluster (VarUnit) included for variance estimation
+- we renamed these variables to be more obvious but original documentation has diff var names
+
+---
+## `tbl_svy` Objects with Supplied Replicate Weights
+
+- Key information is usually found in documentation of a public use file
+
+```{r sd_rep_syn, eval=FALSE}
+as_survey_rep(
+  .data,
+  variables = NULL,#defaults to all in .data
+  repweights = NULL,#variables specifying replicate weights
+  weights = NULL,#variable for analysis weight
+  type = c("BRR", "Fay", "JK1", "JKn", "bootstrap", "other"),
+  rho = NULL,#shrinkage factor for Fay's method,
+  mse = getOption("survey.replicates.mse"), #	if TRUE, compute variances based on 
+  # sum of squares around the point estimate, rather than the mean of the replicates
+  scale = NULL, # overall multiplier for squared deviations
+  ...
+)
+
+```
+---
+## RECS Design Object
+
+.smaller[
+```{r sd_recs, eval=TRUE}
+recs_des <- recs %>%
+   as_survey_rep(weights=NWEIGHT,
+                 repweights=starts_with("BRRWT"),
+                 type="Fay",
+                 rho=0.5,
+                 mse=TRUE)
+summary(recs_des)
+```
+]
+
+???
+- Fay's method of BRR weight with $\epsilon=0.5$
+- RECS documentation includes syntax for creating survey design object
+- https://www.eia.gov/consumption/residential/data/2015/pdf/microdata_v3.pdf
+
+---
+## Create Replicate Weights: jackknife
+
+- You can also start with a design object specified by the design and create replicate weights
+.smaller[
+```{r sd_create_rep}
+data(api)
+dclus1 <- apiclus1 %>% as_survey_design(ids = dnum, weights = pw, fpc = fpc)
+rclus1 <- as_survey_rep(dclus1)
+summary(rclus1)
+
+```
+]
+---
+## Create Replicate Weights: bootstrap
+
+- You can also start with a design object specified by the design and create replicate weights
+.small[
+```{r sd_create_boot}
+bclus1 <- as_survey_rep(dclus1, type="bootstrap", replicates=100)
+summary(bclus1)
+
+```
+]
+---
+## Create Survey Design Object for ACS
+
+Fill in the blanks
+- Analysis weight: PWGTP
+- replicate weights: PWGTP1-PWGTP180
+- jackknife with scale adjustment of 4/80
+```{r sd_acs_fib, eval=FALSE}
+acs_des <- acs_pums %>%
+  as_survey_rep(
+    weights=___________,
+    repweights=___________,
+    type=___________,
+    scale=_________
+  )
+```
+--
+
+```{r sd_acs_fib_sol, eval=FALSE}
+acs_des <- acs_pums %>%
+   as_survey_rep(
+      weights=PWGTP,
+      repweights=stringr::str_c("PWGTP", 1:80),
+      type="JK1",
+      scale=4/80
+   )
+
+```
+---
+## Create Survey Design Object for CPS 2011 Supplement
+
+Fill in the blanks
+- Analysis weight: wtsupp
+- replicate weights: repwtp1 -repwtp160
+- BRR
+```{r sd_cps_fib, eval=FALSE}
+cps_des <- cps %>%
+  as_survey_rep(
+    weights=___________,
+    repweights=___________,
+    type=___________
+  )
+```
+--
+```{r sd_cps_fib_sol, eval=FALSE}
+cps_des <- cps %>%
+  as_survey_rep(
+    weights=wtsupp,
+    repweights=starts_with("repwtp"),
+    type="BRR"
+  )
+```
+---
+## Create Survey Design Object for NHANES
+
+Fill in the blanks
+- Analysis weight: WTINT2YR
+- Variance Stratum: SDMVSTRA
+- Variance Primary Sampling Unit: VPSU
+```{r sd_nhanes_fib, eval=FALSE}
+nhanes_des <- nhanes %>%
+  as_survey_design(
+    weights=___________,
+    ids=___________,
+    strata=___________,
+    fpc=___________
+  )
+```
+--
+```{r sd_nhanes_fib_sol, eval=FALSE}
+nhanes_des <- nhanes %>%
+  as_survey_design(
+    weights=WTINT2YR,
+    ids=VPSU,
+    strata=SDMVSTRA,
+    fpc=NULL
+  )
+```
+---
+## Create Survey Design Object for LEMAS 2016
+
+Fill in the blanks
+- Analysis weight: ANALYSISWEIGHT
+- Variance Stratum: STRATA
+- FPC: FRAMESIZE
+```{r sd_lemas_fib, eval=FALSE}
+lemas_des <- lemas %>%
+  as_survey_design(
+    weights=___________,
+    ids=___________,
+    strata=___________,
+    fpc=___________
+  )
+```
+--
+
+```{r sd_lemas_fib_sol, eval=FALSE}
+lemas_des <- lemas %>%
+  as_survey_design(
+    weights=ANALYSISWEIGHT,
+    ids=1,
+    strata=STRATA,
+    fpc=FRAMESIZE
+  )
+```
+
+---
+class: inverse center middle
+# Closing
+---
+## Resources for more learning
+
+- https://cran.r-project.org/web/packages/srvyr/vignettes/srvyr-vs-survey.html
+
+- https://r-survey.r-forge.r-project.org/survey/ 
+  - Includes more advanced modeling
+
+
+---
+## Thank You!
+
+### We hope you learned a lot in this short course!
+
+Please let us know if you have any feedback on this course.  You will receive an email from AAPOR asking you to fill out a survey about this course. All feedback is welcome!
+
+
+## Questions?
+
+---
+## Sources
+
+- <font size="2">The American National Election Studies (https://electionstudies.org/). These materials are based on work supported by the National Science Foundation under grant numbers SES 1444721, 2014-2017, the University of Michigan, and Stanford University.  </font>
+
+- <font size="2">*Residential Energy Consumption Survey: Using the 2015 Microdata File to Compute Estimates and Standard Errors.* U.S. Department of Energy (2017) https://www.eia.gov/consumption/residential/data/2015/pdf/microdata_v3.pdf </font>
+
+- <font size="2">Horst AM, Hill AP, Gorman KB (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. R package version 0.1.0. https://allisonhorst.github.io/palmerpenguins/ </font>
+
+- <font size="2">T. Lumley (2020) "survey: analysis of complex survey samples". R package version 4.0. https://r-survey.r-forge.r-project.org/survey/ </font>
+
+- <font size="2">Greg Freedman Ellis and Ben Schneider (2020). srvyr: 'dplyr'-Like Syntax for Summary Statistics of Survey Data. R package version 1.0.0. https://CRAN.R-project.org/package=srvyr </font>
+
+- <font size="2">Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.5. https://CRAN.R-project.org/package=dplyr </font>

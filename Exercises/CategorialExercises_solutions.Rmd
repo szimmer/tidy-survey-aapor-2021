@@ -1,0 +1,164 @@
+---
+title: "Categorical Data Analysis Exercise Solutions"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Set-up
+```{r}
+library(tidyverse) # for tidyverse
+library(here) # for file paths
+library(survey) # for survey analysis
+library(srvyr) # for tidy survey analysis
+
+anes <- read_rds(here("Data", "anes.rds")) %>%
+   mutate(Weight=Weight/sum(Weight)*224059005) 
+# adjust weight to sum to citizen pop, 18+ in Nov 2016 per ANES methodology documentation
+
+anes_des <- anes %>%
+   as_survey_design(weights = Weight,
+                    strata = Stratum,
+                    ids = VarUnit,
+                    nest = TRUE)
+```
+
+# Part 1
+
+1. How many females have a graduate degree?
+
+```{r}
+#Option 1:
+anes_des %>%
+  filter(Gender=="Female", Education=="Graduate") %>%
+  survey_count(name="n")
+#Option 2:
+anes_des %>%
+  filter(Gender=="Female", Education=="Graduate") %>%
+  summarize(
+    N=survey_total(),  .groups="drop"
+  )
+
+```
+
+2. What percentage of people identify as "Strong democrat"?
+
+```{r}
+anes_des %>%
+  group_by(PartyID) %>% 
+  summarize(
+    p=survey_mean()
+  ) %>%
+  filter(PartyID=="Strong democrat")
+```
+
+3. What percentage of people who voted in the 2016 election identify as "Strong republican"?
+
+```{r}
+anes_des %>%
+  filter(VotedPres2016=="Yes") %>% 
+  group_by(PartyID) %>% 
+  summarize(
+    p=survey_mean()
+  )
+```
+
+4. What percentage of people voted in both the 2012 election and in the 2016 election?  Include the confidence interval.
+
+```{r}
+anes_des %>%
+  group_by(groups=interaction(VotedPres2012, VotedPres2016)) %>% 
+  filter(!is.na(groups)) %>%
+  summarize(
+    VotedPres2012=VotedPres2012[1],
+    VotedPres2016=VotedPres2016[1],
+    p=survey_mean(var="ci")
+  )
+```
+
+5. What is the design effect for the proportion of people who voted early?
+
+```{r}
+anes_des %>%
+   filter(!is.na(EarlyVote2016)) %>%
+   group_by(EarlyVote2016) %>%
+   summarize(
+      p=survey_mean(deff=TRUE),
+      N=survey_total()
+   )
+```
+
+# Part 2
+
+1. Is there a relationship between PartyID and When people voted in the 2016 election (on election day or early voting)?
+
+```{r}
+anes_des %>%
+   svychisq(design=.,
+            formula=~PartyID +EarlyVote2016)
+```
+
+2. Is there a relationship between PartyID and trust in the government?
+
+```{r}
+anes_des %>%
+   svychisq(design=.,
+            formula=~PartyID+TrustGovernment,
+            statistic="Wald")
+```
+
+
+# Bonus
+
+1. What percentage of people lean republican?
+
+```{r}
+
+#Solution 1: Using forcats package
+anes_des %>%
+   mutate(PartyID3=fct_collapse(PartyID,
+                                LeanDem=c("Strong democrat",
+                                          "Not very strong democrat",
+                                          "Independent-democrat"),
+                                LeanRep=c("Strong republican",
+                                          "Not very strong republican",
+                                          "Independent-republican"),
+                                other_level="Other")) %>% 
+   group_by(PartyID3) %>% 
+   summarize(p=survey_mean())
+
+#Solution 2: Using case_when
+anes_des %>%
+   mutate(PartyID3=case_when(PartyID %in% c("Strong democrat",
+                                            "Not very strong democrat",
+                                            "Independent-democrat")~"LeanDem",
+                             PartyID %in% c("Strong republican",
+                                            "Not very strong republican",
+                                            "Independent-republican")~"LeanRep",
+                             is.na(PartyID)~NA_character_,
+                             TRUE~"Other")) %>% 
+   group_by(PartyID3) %>% 
+   summarize(p=survey_mean())
+
+```
+
+2. Were people who lean democrat more likely to vote early in the 2020 election?
+
+```{r}
+
+earlyv_glm<-anes_des %>%
+   mutate(PartyID3=fct_collapse(PartyID,
+                                LeanDem=c("Strong democrat",
+                                          "Not very strong democrat",
+                                          "Independent-democrat"),
+                                LeanRep=c("Strong republican",
+                                          "Not very strong republican",
+                                          "Independent-republican"),
+                                other_level="Other")) %>% 
+   svyglm(design=.,
+          formula=(EarlyVote2016=="Yes")~PartyID3,
+          family=quasibinomial(),
+          na.action=na.omit)
+
+summary(earlyv_glm)
+```

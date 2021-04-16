@@ -1,0 +1,88 @@
+---
+title: "Warm-up Exercise Solutions"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Course set-up
+First, let's make sure you have everything you need for the course. Run the following library statements. If something is not installed, install it.
+
+```{r}
+# install.packages("tidyverse")
+# install.packages("srvyr")
+# install.packages("here")
+# install.packages("palmerpenguins")
+# install.packages("remotes")
+
+library(tidyverse) # for tidyverse
+library(here) # for file paths
+
+remotes::install_github("bschneidr/survey", ref = "c217689")
+library(srvyr)
+library(palmerpenguins)
+
+
+```
+
+# Warm-up exercises: Play with penguin data!!!
+
+```{r}
+penguins
+```
+
+How many penguins of each species are there? Hint: use `count`
+```{r}
+penguins %>%
+   count(species)
+```
+
+How many penguins of each species and sex are there? Hint: use `count`
+
+```{r}
+penguins %>%
+   count(species, sex)
+```
+
+What is the mean length of flipper by species? Hint: use `group_by` and `summarise`
+```{r}
+penguins %>%
+   group_by(species) %>%
+   summarize(
+     MeanFlipperLength=mean(flipper_length_mm, 
+                            na.rm=TRUE))
+```
+
+
+What is the mean flipper length by species and sex? Hint: use `group_by` and `summarise`
+```{r}
+penguins %>%
+   group_by(species, sex) %>%
+   summarize(
+     MeanFlipperLength=mean(flipper_length_mm,
+                            na.rm=TRUE))
+```
+
+# Advanced warm-up exercises
+
+Fit a simple linear regression between body mass and flipper length.
+
+```{r}
+mod1 <- lm(body_mass_g ~ flipper_length_mm,
+           data=penguins)
+summary(mod1)
+```
+
+
+Test whether the average flipper length is significantly different between male and female penguins. Use t-test, lm, or glm
+
+```{r}
+t.test(flipper_length_mm ~ sex, data=penguins)
+
+mod3 <- lm(flipper_length_mm ~ sex, data=penguins)
+summary(mod3)
+
+mod4 <- glm(flipper_length_mm ~ sex, data=penguins)
+summary(mod4)
+```
+
