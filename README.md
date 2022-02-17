@@ -1,5 +1,5 @@
 # Tidy Survey Analysis in R using the srvyr Package
-Materials for [AAPOR short course](https://www.aapor.org/Conference-Events/Annual-Meeting/Short-Courses.aspx) on Tidy Survey Analysis in R using the `srvyr` Package in May 2021
+Materials for a forthcoming short course presented in 3 sessions.
 
 - **RawData** folder contains public use file data along with any documentation
    - American National Election Studies, 2016
