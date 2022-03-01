@@ -225,7 +225,7 @@ https://electionstudies.org/
 
 ---
 class: inverse center middle
-# Categorical data analysis
+# Categorical descriptive data analysis
 ---
 ## Overview of Survey Analysis using `srvyr` Package
 
@@ -477,6 +477,221 @@ anes_des %&gt;%
 - Open CategoricalExercises.Rmd and work through Part 1
 
 - We will take 7 minutes. Use this time for the exercises
+
+
+---
+class: inverse center middle
+# Categorical data testing and modeling
+
+---
+## `svychisq` Syntax
+
+- Testing and modeling is done with the `survey` package
+- You can use the same design object
+
+
+```r
+svychisq(formula,
+         design, 
+         statistic = c("F",  "Chisq", "Wald", "adjWald", "lincom", "saddlepoint"),
+         na.rm=TRUE,
+         ...)
+```
+???
+- when we want to test categorical distributions we use `svychisq`
+- it takes a formula, and the survey design data
+
+---
+## `svychisq` Example 1: Function Defaults
+
+- How often can you trust the federal gov't to do what is right?
+- How often can you trust other people?
+
+
+```r
+anes_des %&gt;%
+   svychisq(design=.,
+            formula=~TrustPeople +TrustGovernment)
+```
+
+```
+## 
+## 	Pearson's X^2: Rao &amp; Scott adjustment
+## 
+## data:  NextMethod()
+## F = 12.608, ndf = 13.161, ddf = 1750.368, p-value &lt; 2.2e-16
+```
+???
+- We want to compare the distributions of these two questions
+
+---
+## `svychisq` Example 2: Wald Statistic
+
+- How often can you trust the federal gov't to do what is right?
+- Who did you vote for? Clinton, Trump, or Other
+
+
+```r
+anes_des %&gt;%
+   svychisq(design=.,
+            formula=~TrustGovernment +VotedPres2016_selection,
+            statistic="Wald")
+```
+
+```
+## 
+## 	Design-based Wald test of association
+## 
+## data:  NextMethod()
+## F = 24.692, ndf = 8, ddf = 133, p-value &lt; 2.2e-16
+```
+???
+- Can use different statistics
+
+
+---
+## Refresher on formula notation
+Symbol | Example | Meaning
+-|-|-
++|`+X`|include this variable
+-|`-X`|delete this variable
+:|`X:Z`|include the interaction between these variables
+* |`X*Z`|include these variables and the interactions between them
+^n |`(X+Z+Y)^3`|include these variables and all interactions up to n way
+I |`I(X-Z)`| as-as: include a new variable which is the difference of these variables
+
+---
+## Formula notation - knowledge check
+
+I want to model the following:
+   
+`$$mpg_i=\beta_0+\beta_1cyl_{i}+\beta_2disp_{i}+\beta_3hp_{i}+\beta_4cyl_{i}disp_{i}+\beta_5cyl_{i}hp_{i}+\beta_6disp_{i}hp_{i}+\epsilon_i$$`
+      
+How can you write this formula? Select all that apply:
+
+1. `mpg~cyl:disp:hp`
+2. `mpg~(cyl+disp+hp)^2`
+3. `mpg~cyl+disp+hp+cyl:disp+cyl:hp+disp:hp`
+4. `mpg~cyl*disp*hp`
+5. `mpg~cyl*disp+cyl*hp+disp*hp`
+
+---
+## Formula notation - knowledge check (solution)
+
+I want to model the following:
+   
+`$$mpg_i=\beta_0+\beta_1cyl_{i}+\beta_2disp_{i}+\beta_3hp_{i}+\beta_4cyl_{i}disp_{i}+\beta_5cyl_{i}hp_{i}+\beta_6disp_{i}hp_{i}+\epsilon_i$$`
+      
+How can you write this formula? Select all that apply:
+
+1. `mpg~cyl:disp:hp` - no, this only has the interactions
+2. `mpg~(cyl+disp+hp)^2` - yes
+3. `mpg~cyl+disp+hp+cyl:disp+cyl:hp+disp:hp` - yes
+4. `mpg~cyl*disp*hp` - no, this also has the 3-way interaction
+5. `mpg~cyl*disp+cyl*hp+disp*hp` - yes
+
+There may be other ways as well!!!
+
+
+---
+## Logistic regression with `svyglm`
+
+
+
+```r
+svyglm(formula, # response ~ terms
+       design,
+       na.action, #default is na.omit
+       family = quasibinomial, # use this to avoid warning about non-integers
+       ....)
+```
+
+---
+## Example logistic regression
+
+
+
+```r
+anes_des %&gt;%
+   svyglm(design=.,
+            formula=TrustGovernment~ +VotedPres2016_selection,
+            family = quasibinomial) %&gt;%
+   summary()
+```
+
+```
+## Warning in summary.glm(g): observations with zero weight not used for
+## calculating dispersion
+```
+
+```
+## Warning in summary.glm(glm.object): observations with zero weight not used for
+## calculating dispersion
+```
+
+```
+## 
+## Call:
+## svyglm(formula = TrustGovernment ~ +VotedPres2016_selection, 
+##     design = ., family = quasibinomial)
+## 
+## Survey design:
+## Called via srvyr
+## 
+## Coefficients:
+##                              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                    3.5822     0.2561  13.987  &lt; 2e-16 ***
+## VotedPres2016_selectionTrump   2.3099     0.5355   4.313 3.14e-05 ***
+## VotedPres2016_selectionOther   1.1029     1.0186   1.083    0.281    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for quasibinomial family taken to be 1.123742)
+## 
+## Number of Fisher Scoring iterations: 8
+```
+
+---
+## Practice on your own
+
+- Open CategoricalExercises.Rmd and work through Part 2
+
+- We will take 7 minutes. Use this time for the exercises
+
+---
+class: inverse center middle
+# Closing
+---
+## Resources for more learning
+
+- https://cran.r-project.org/web/packages/srvyr/vignettes/srvyr-vs-survey.html
+
+- https://r-survey.r-forge.r-project.org/survey/ 
+  - Includes more advanced modeling
+
+
+---
+## Thank You!
+
+### We hope you learned a lot in this short course!
+
+Please let us know if you have any feedback on this course. All feedback is welcome!
+
+
+## Questions?
+
+---
+## Sources
+
+- &lt;font size="2"&gt;The American National Election Studies (https://electionstudies.org/). These materials are based on work supported by the National Science Foundation under grant numbers SES 1444721, 2014-2017, the University of Michigan, and Stanford University.  &lt;/font&gt;
+
+- &lt;font size="2"&gt;Horst AM, Hill AP, Gorman KB (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. R package version 0.1.0. https://allisonhorst.github.io/palmerpenguins/ &lt;/font&gt;
+
+- &lt;font size="2"&gt;T. Lumley (2020) "survey: analysis of complex survey samples". R package version 4.0. https://r-survey.r-forge.r-project.org/survey/ &lt;/font&gt;
+
+- &lt;font size="2"&gt;Greg Freedman Ellis and Ben Schneider (2020). srvyr: 'dplyr'-Like Syntax for Summary Statistics of Survey Data. R package version 1.0.0. https://CRAN.R-project.org/package=srvyr &lt;/font&gt;
+
+- &lt;font size="2"&gt;Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.5. https://CRAN.R-project.org/package=dplyr &lt;/font&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
