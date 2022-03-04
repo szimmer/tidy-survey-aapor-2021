@@ -8,8 +8,9 @@ output:
 # Course set-up
 First, let's make sure you have everything you need for the course. Run the following library statements. If something is not installed, install it.
 
-```{r}
+```{r setup}
 # install.packages("tidyverse")
+# remotes::install_github("bschneidr/survey", ref = "c217689")
 # install.packages("srvyr")
 # install.packages("here")
 # install.packages("palmerpenguins")
@@ -17,54 +18,53 @@ First, let's make sure you have everything you need for the course. Run the foll
 
 library(tidyverse) # for tidyverse
 library(here) # for file paths
-
-remotes::install_github("bschneidr/survey", ref = "c217689")
-library(srvyr)
 library(palmerpenguins)
 
 
 ```
 
-# Warm-up exercises: Play with penguin data!!!
+# Warm-up exercises for Day 1
 
-```{r}
-penguins
+```{r datapeek}
+glimpse(penguins)
 ```
 
 How many penguins of each species are there? Hint: use `count`
-```{r}
+```{r speciestab}
 
 ```
 
 How many penguins of each species and sex are there? Hint: use `count`
 
-```{r}
+```{r speciessextab}
 
 ```
 
+# Warm-up exercises for Day 2
+
 What is the mean length of flipper by species? Hint: use `group_by` and `summarise`
-```{r}
+```{r fliplengthspecies}
 
 ```
 
 
 What is the mean flipper length by species and sex? Hint: use `group_by` and `summarise`
-```{r}
+```{r fliplengthspecsex}
 
 ```
 
-# Advanced warm-up exercises
+# Advanced warm-up exercises for Day 2
 
 Fit a simple linear regression between body mass and flipper length.
 
-```{r}
+```{r massfliplength}
 
 ```
 
 
 Test whether the average flipper length is significantly different between male and female penguins. Use t-test, lm, or glm
 
-```{r}
+```{r lensexrelshp}
 
 ```
 
