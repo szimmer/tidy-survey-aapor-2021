@@ -72,9 +72,7 @@ class: inverse center middle
 
 - Analysis of continuous data with time for practice (day 2)
 
-- Specify a survey design object in R with exercises (day 3)
-
-- Resources for other survey analysis topics (day 3)
+- Survey design objects, constructing replicate weights, and creating derived variables (day 3)
 
 
 ---
@@ -410,6 +408,7 @@ anes_des %&gt;%
 ## 4 No            No            0.321  0.0199   14980427. 1165804.   215
 ```
 ???
+- We will talk more about this next time but filter after creating design object to subset data
 - Note that this is the proportion of voting in 2016 by whether people voted in 2012
 - What if we don't want conditional proportions?
 
@@ -476,7 +475,7 @@ anes_des %&gt;%
 
 - Open CategoricalExercises.Rmd and work through Part 1
 
-- We will take 7 minutes. Use this time for the exercises
+- We will take 15 minutes. Use this time for the exercises and a break
 
 
 ---
@@ -608,32 +607,22 @@ svyglm(formula, # response ~ terms
 
 ---
 ## Example logistic regression
-
+- Predicting trust in government by who someone voted in 2016
 
 
 ```r
-anes_des %&gt;%
+filter(anes_des, Weight&gt;0) %&gt;%
    svyglm(design=.,
-            formula=TrustGovernment~ +VotedPres2016_selection,
+            formula=TrustGovernment~ VotedPres2016_selection,
             family = quasibinomial) %&gt;%
    summary()
 ```
 
 ```
-## Warning in summary.glm(g): observations with zero weight not used for
-## calculating dispersion
-```
-
-```
-## Warning in summary.glm(glm.object): observations with zero weight not used for
-## calculating dispersion
-```
-
-```
 ## 
 ## Call:
-## svyglm(formula = TrustGovernment ~ +VotedPres2016_selection, 
-##     design = ., family = quasibinomial)
+## svyglm(formula = TrustGovernment ~ VotedPres2016_selection, design = ., 
+##     family = quasibinomial)
 ## 
 ## Survey design:
 ## Called via srvyr
@@ -646,7 +635,7 @@ anes_des %&gt;%
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## (Dispersion parameter for quasibinomial family taken to be 1.123742)
+## (Dispersion parameter for quasibinomial family taken to be 0.9679923)
 ## 
 ## Number of Fisher Scoring iterations: 8
 ```
@@ -656,7 +645,7 @@ anes_des %&gt;%
 
 - Open CategoricalExercises.Rmd and work through Part 2
 
-- We will take 7 minutes. Use this time for the exercises
+- We will take 15 minutes. Use this time for the exercises and a break
 
 ---
 class: inverse center middle

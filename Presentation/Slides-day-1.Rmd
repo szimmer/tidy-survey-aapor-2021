@@ -75,9 +75,7 @@ class: inverse center middle
 
 - Analysis of continuous data with time for practice (day 2)
 
-- Specify a survey design object in R with exercises (day 3)
-
-- Resources for other survey analysis topics (day 3)
+- Survey design objects, constructing replicate weights, and creating derived variables (day 3)
 
 
 ---
@@ -333,6 +331,7 @@ anes_des %>%
   )
 ```
 ???
+- We will talk more about this next time but filter after creating design object to subset data
 - Note that this is the proportion of voting in 2016 by whether people voted in 2012
 - What if we don't want conditional proportions?
 
@@ -376,7 +375,7 @@ anes_des %>%
 
 - Open CategoricalExercises.Rmd and work through Part 1
 
-- We will take 7 minutes. Use this time for the exercises
+- We will take 15 minutes. Use this time for the exercises and a break
 
 
 ---
@@ -493,12 +492,12 @@ svyglm(formula, # response ~ terms
 
 ---
 ## Example logistic regression
-
+- Predicting trust in government by who someone voted in 2016
 
 ```{r}
-anes_des %>%
+filter(anes_des, Weight>0) %>%
    svyglm(design=.,
-            formula=TrustGovernment~ +VotedPres2016_selection,
+            formula=TrustGovernment~ VotedPres2016_selection,
             family = quasibinomial) %>%
    summary()
 ```
@@ -508,7 +507,7 @@ anes_des %>%
 
 - Open CategoricalExercises.Rmd and work through Part 2
 
-- We will take 7 minutes. Use this time for the exercises
+- We will take 15 minutes. Use this time for the exercises and a break
 
 ---
 class: inverse center middle
