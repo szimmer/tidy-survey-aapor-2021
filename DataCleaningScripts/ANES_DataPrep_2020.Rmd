@@ -1,5 +1,5 @@
 ---
-title: "American National Election Studies (ANES) 2016 Time Series Study Data Prep"
+title: "American National Election Studies (ANES) 2020 Time Series Study Data Prep"
 output: github_document
 ---
 
@@ -202,15 +202,19 @@ anes_2020 <- anes_in_2020 %>%
       case_when(
         V202073 == 1 ~ "Biden",
         V202073 == 2 ~ "Trump",
-        V202073 >= 3 ~ "Other",
+        V202073 >= 3 & V202073 <= 8~ "Other",
+        V202073 == 11 ~ NA_character_,
+        V202073 == 12 ~ NA_character_,
         TRUE ~ NA_character_
       ),
       levels = c("Biden", "Trump", "Other")
     ),
     EarlyVote2020 = factor(
-       case_when(V201025x == 4 ~ "Yes",
-                 VotedPres2020 == "Yes" ~ "No",
-                 TRUE ~ NA_character_), 
+       case_when(
+          V201025x < 0 ~ NA_character_,
+          V201025x == 4 ~ "Yes",
+          VotedPres2020 == "Yes" ~ "No",
+          TRUE ~ NA_character_), 
       levels = c("Yes", "No")
     )
   )

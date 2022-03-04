@@ -1,4 +1,4 @@
-American National Election Studies (ANES) 2016 Time Series Study Data
+American National Election Studies (ANES) 2020 Time Series Study Data
 Prep
 ================
 
@@ -240,18 +240,19 @@ anes_2020 <- anes_in_2020 %>%
       case_when(
         V202073 == 1 ~ "Biden",
         V202073 == 2 ~ "Trump",
-        V202073 >= 3 ~ "Other",
+        V202073 >= 3 & V202073 <= 8~ "Other",
+        V202073 == 11 ~ NA_character_,
+        V202073 == 12 ~ NA_character_,
         TRUE ~ NA_character_
       ),
       levels = c("Biden", "Trump", "Other")
     ),
     EarlyVote2020 = factor(
-      case_when(
-                 V201025x < 0 ~ NA_character_,
-        V201025x == 4 ~ "Yes",
-        VotedPres2020 == "Yes" ~ "No",
-        TRUE ~ NA_character_
-      ),
+       case_when(
+          V201025x < 0 ~ NA_character_,
+          V201025x == 4 ~ "Yes",
+          VotedPres2020 == "Yes" ~ "No",
+          TRUE ~ NA_character_), 
       levels = c("Yes", "No")
     )
   )
@@ -386,8 +387,8 @@ summary(anes_2020)
     ##  VotedPres2020_selection EarlyVote2020
     ##  Biden:3267              Yes : 415    
     ##  Trump:2462              No  :6035    
-    ##  Other: 170              NA's:1830    
-    ##  NA's :2381                           
+    ##  Other: 152              NA's:1830    
+    ##  NA's :2399                           
     ##                                       
     ##                                       
     ## 
@@ -648,12 +649,12 @@ anes_2020 %>% count(VotedPres2020_selection, V202073)
     ##  5 Other                    5 [5. Other candidate {SPECIFY}]                  56
     ##  6 Other                    7 [7. Specified as Republican candidate]           1
     ##  7 Other                    8 [8. Specified as Libertarian candidate]          3
-    ##  8 Other                   11 [11. Specified as don't know]                    2
-    ##  9 Other                   12 [12. Specified as refused]                      16
-    ## 10 <NA>                    -9 [-9. Refused]                                   53
-    ## 11 <NA>                    -7 [-7. No post-election data, deleted due to …    77
-    ## 12 <NA>                    -6 [-6. No post-election interview]               754
-    ## 13 <NA>                    -1 [-1. Inapplicable]                            1497
+    ##  8 <NA>                    -9 [-9. Refused]                                   53
+    ##  9 <NA>                    -7 [-7. No post-election data, deleted due to …    77
+    ## 10 <NA>                    -6 [-6. No post-election interview]               754
+    ## 11 <NA>                    -1 [-1. Inapplicable]                            1497
+    ## 12 <NA>                    11 [11. Specified as don't know]                    2
+    ## 13 <NA>                    12 [12. Specified as refused]                      16
 
 ``` r
 anes_2020 %>% count(EarlyVote2020, V201025x, VotedPres2020)
