@@ -8,7 +8,7 @@ author:
 date: "TBD 2022"
 output:
   xaringan::moon_reader:
-    css: xaringan-themer.css
+    css: xaringan-themer-mod.css
     nature:
       slideNumberFormat: "%current%"
       highlightStyle: github
@@ -19,17 +19,6 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, tidy = FALSE)
-```
-
-
-
-```{r xaringan-themer, include=FALSE, warning=FALSE}
-library(xaringanthemer)
-style_duo_accent(
-  primary_color = "#1E4F96",
-  secondary_color = "#00A3E0",
-  inverse_header_color = "#FFFFFF"
-)
 ```
 
 class: inverse center middle
