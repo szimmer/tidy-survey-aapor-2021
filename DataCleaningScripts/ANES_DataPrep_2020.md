@@ -73,6 +73,7 @@ anes_2020 <- anes_in_2020 %>%
     "V200010c", # FULL SAMPLE VARIANCE UNIT
     "V200002", # MODE OF INTERVIEW: PRE-ELECTION INTERVIEW
     "V201006", # PRE: HOW INTERESTED IN FOLLOWING CAMPAIGNS
+    "V201102", # PRE: DID R VOTE FOR PRESIDENT IN 2016
     "V201101", # PRE: DID R VOTE FOR PRESIDENT IN 2016 [REVISED]
     "V201103", # PRE: RECALL OF LAST (2016) PRESIDENTIAL VOTE CHOICE)
     "V201025x", # PRE: SUMMARY: REGISTRATION AND EARLY VOTE STATUS
@@ -213,8 +214,8 @@ anes_2020 <- anes_in_2020 %>%
     ),
     VotedPres2016 = factor(
       case_when(
-        V201101 == 1 ~ "Yes",
-        V201101 == 2 ~ "No",
+        V201101 == 1 | V201102 == 1 ~ "Yes",
+        V201101 == 2 | V201102 == 2 ~ "No",
         TRUE ~ NA_character_
       ),
       levels = c("Yes", "No")
@@ -258,7 +259,7 @@ anes_2020 <- anes_in_2020 %>%
   )
 ```
 
-    ## select: dropped 1,750 variables (version, V200001, V160001_orig, V200003, V200004, …)
+    ## select: dropped 1,749 variables (version, V200001, V160001_orig, V200003, V200004, …)
 
     ## mutate: new variable 'InterviewMode' (factor) with 3 unique values and 0% NA
 
@@ -290,7 +291,7 @@ anes_2020 <- anes_in_2020 %>%
 
     ##         new variable 'TrustPeople' (factor) with 6 unique values and <1% NA
 
-    ##         new variable 'VotedPres2016' (factor) with 3 unique values and 51% NA
+    ##         new variable 'VotedPres2016' (factor) with 3 unique values and <1% NA
 
     ##         new variable 'VotedPres2016_selection' (factor) with 4 unique values and 23% NA
 
@@ -312,85 +313,85 @@ summary(anes_2020)
     ##  3rd Qu.:1.2110   3rd Qu.:37.00   3rd Qu.:2.000   3rd Qu.:3.000  
     ##  Max.   :6.6507   Max.   :50.00   Max.   :3.000   Max.   :3.000  
     ##  NA's   :827                                                     
-    ##     V201006          V201101            V201103          V201025x     
-    ##  Min.   :-9.000   Min.   :-9.00000   Min.   :-9.000   Min.   :-4.000  
-    ##  1st Qu.: 1.000   1st Qu.:-1.00000   1st Qu.: 1.000   1st Qu.: 3.000  
-    ##  Median : 1.000   Median :-1.00000   Median : 1.000   Median : 3.000  
-    ##  Mean   : 1.606   Mean   : 0.08901   Mean   : 1.026   Mean   : 2.914  
-    ##  3rd Qu.: 2.000   3rd Qu.: 1.00000   3rd Qu.: 2.000   3rd Qu.: 3.000  
-    ##  Max.   : 3.000   Max.   : 2.00000   Max.   : 5.000   Max.   : 4.000  
+    ##     V201006          V201102          V201101            V201103      
+    ##  Min.   :-9.000   Min.   :-9.000   Min.   :-9.00000   Min.   :-9.000  
+    ##  1st Qu.: 1.000   1st Qu.:-1.000   1st Qu.:-1.00000   1st Qu.: 1.000  
+    ##  Median : 1.000   Median : 1.000   Median :-1.00000   Median : 1.000  
+    ##  Mean   : 1.606   Mean   : 0.104   Mean   : 0.08901   Mean   : 1.026  
+    ##  3rd Qu.: 2.000   3rd Qu.: 1.000   3rd Qu.: 1.00000   3rd Qu.: 2.000  
+    ##  Max.   : 3.000   Max.   : 2.000   Max.   : 2.00000   Max.   : 5.000  
     ##                                                                       
-    ##     V201231x         V201233          V201237          V201507x    
-    ##  Min.   :-9.000   Min.   :-9.000   Min.   :-9.000   Min.   :-9.00  
-    ##  1st Qu.: 2.000   1st Qu.: 3.000   1st Qu.: 2.000   1st Qu.:35.00  
-    ##  Median : 4.000   Median : 4.000   Median : 3.000   Median :51.00  
-    ##  Mean   : 3.834   Mean   : 3.421   Mean   : 2.785   Mean   :49.04  
-    ##  3rd Qu.: 6.000   3rd Qu.: 4.000   3rd Qu.: 4.000   3rd Qu.:65.00  
-    ##  Max.   : 7.000   Max.   : 5.000   Max.   : 5.000   Max.   :80.00  
+    ##     V201025x         V201231x         V201233          V201237      
+    ##  Min.   :-4.000   Min.   :-9.000   Min.   :-9.000   Min.   :-9.000  
+    ##  1st Qu.: 3.000   1st Qu.: 2.000   1st Qu.: 3.000   1st Qu.: 2.000  
+    ##  Median : 3.000   Median : 4.000   Median : 4.000   Median : 3.000  
+    ##  Mean   : 2.914   Mean   : 3.834   Mean   : 3.421   Mean   : 2.785  
+    ##  3rd Qu.: 3.000   3rd Qu.: 6.000   3rd Qu.: 4.000   3rd Qu.: 4.000  
+    ##  Max.   : 4.000   Max.   : 7.000   Max.   : 5.000   Max.   : 5.000  
+    ##                                                                     
+    ##     V201507x        V201510          V201549x         V201600      
+    ##  Min.   :-9.00   Min.   :-9.000   Min.   :-9.000   Min.   :-9.000  
+    ##  1st Qu.:35.00   1st Qu.: 3.000   1st Qu.: 1.000   1st Qu.: 1.000  
+    ##  Median :51.00   Median : 5.000   Median : 1.000   Median : 2.000  
+    ##  Mean   :49.04   Mean   : 5.532   Mean   : 1.499   Mean   : 1.457  
+    ##  3rd Qu.:65.00   3rd Qu.: 6.000   3rd Qu.: 2.000   3rd Qu.: 2.000  
+    ##  Max.   :80.00   Max.   :95.000   Max.   : 6.000   Max.   : 2.000  
     ##                                                                    
-    ##     V201510          V201549x         V201600          V201617x    
-    ##  Min.   :-9.000   Min.   :-9.000   Min.   :-9.000   Min.   :-9.00  
-    ##  1st Qu.: 3.000   1st Qu.: 1.000   1st Qu.: 1.000   1st Qu.: 4.00  
-    ##  Median : 5.000   Median : 1.000   Median : 2.000   Median :11.00  
-    ##  Mean   : 5.532   Mean   : 1.499   Mean   : 1.457   Mean   :10.22  
-    ##  3rd Qu.: 6.000   3rd Qu.: 2.000   3rd Qu.: 2.000   3rd Qu.:17.00  
-    ##  Max.   :95.000   Max.   : 6.000   Max.   : 2.000   Max.   :22.00  
-    ##                                                                    
-    ##     V202066          V202109x          V202072            V202073       
-    ##  Min.   :-9.000   Min.   :-2.0000   Min.   :-9.00000   Min.   :-9.0000  
-    ##  1st Qu.: 3.000   1st Qu.: 1.0000   1st Qu.:-1.00000   1st Qu.:-1.0000  
-    ##  Median : 4.000   Median : 1.0000   Median : 1.00000   Median : 1.0000  
-    ##  Mean   : 2.453   Mean   : 0.5879   Mean   :-0.04746   Mean   : 0.2389  
-    ##  3rd Qu.: 4.000   3rd Qu.: 1.0000   3rd Qu.: 1.00000   3rd Qu.: 2.0000  
-    ##  Max.   : 4.000   Max.   : 1.0000   Max.   : 2.00000   Max.   :12.0000  
-    ##                                                                         
-    ##     V202110x         InterviewMode      Weight          Stratum     VarUnit 
-    ##  Min.   :-9.0000   Video    : 359   Min.   :0.0083   12     : 192   1:4091  
-    ##  1st Qu.: 1.0000   Telephone: 139   1st Qu.:0.3863   30     : 190   2:4173  
-    ##  Median : 1.0000   Web      :7782   Median :0.6863   21     : 188   3:  16  
-    ##  Mean   : 0.8036                    Mean   :1.0000   1      : 186           
-    ##  3rd Qu.: 2.0000                    3rd Qu.:1.2110   25     : 186           
-    ##  Max.   : 5.0000                    Max.   :6.6507   26     : 185           
-    ##                                     NA's   :827      (Other):7153           
-    ##       Age               AgeGroup       Gender                    RaceEth    
-    ##  Min.   :18.00   18-29      :1003   Male  :3763   White              :5963  
-    ##  1st Qu.:37.00   30-39      :1381   Female:4450   Black              : 726  
-    ##  Median :52.00   40-49      :1199   NA's  :  67   Hispanic           : 762  
-    ##  Mean   :51.59   50-59      :1335                 Asian, NH/PI       : 284  
-    ##  3rd Qu.:66.00   60-69      :1562                 AI/AN              : 172  
-    ##  Max.   :80.00   70 or older:1452                 Other/multiple race: 271  
-    ##  NA's   :348     NA's       : 348                 NA's               : 102  
-    ##                      PartyID            Education                 Income    
-    ##  Strong democrat         :1961   Less than HS: 376   Under $9,999    : 719  
-    ##  Strong republican       :1730   High school :1336   $50,000-59,999  : 546  
-    ##  Independent-democrat    : 975   Post HS     :2790   $100,000-109,999: 506  
-    ##  Independent             : 968   Bachelor's  :2055   $250,000 or more: 449  
-    ##  Not very strong democrat: 900   Graduate    :1592   $80,000-89,999  : 426  
-    ##  (Other)                 :1711   NA's        : 131   (Other)         :5018  
-    ##  NA's                    :  35                       NA's            : 616  
-    ##           Income7                 CampaignInterest            TrustGovernment
-    ##  $125k or more:1616   Very much interested:4320    Always             :  88  
-    ##  Under $20k   :1211   Somewhat interested :2890    Most of the time   :1133  
-    ##  $20-40k      :1157   Not much interested :1069    About half the time:2569  
-    ##  $40-60k      :1097   NA's                :   1    Some of the time   :3674  
-    ##  $60-80k      :1004                                Never              : 779  
-    ##  (Other)      :1579                                NA's               :  37  
-    ##  NA's         : 616                                                          
-    ##               TrustPeople   VotedPres2016 VotedPres2016_selection VotedPres2020
-    ##  Always             :  52   Yes :3070     Clinton:3172            Yes :6450    
-    ##  Most of the time   :3842   No  :1001     Trump  :2746            No  :1039    
-    ##  About half the time:2265   NA's:4209     Other  : 432            NA's: 791    
-    ##  Some of the time   :1810                 NA's   :1930                         
-    ##  Never              : 292                                                      
-    ##  NA's               :  19                                                      
-    ##                                                                                
-    ##  VotedPres2020_selection EarlyVote2020
-    ##  Biden:3267              Yes : 415    
-    ##  Trump:2462              No  :6035    
-    ##  Other: 152              NA's:1830    
-    ##  NA's :2399                           
-    ##                                       
-    ##                                       
+    ##     V201617x        V202066          V202109x          V202072        
+    ##  Min.   :-9.00   Min.   :-9.000   Min.   :-2.0000   Min.   :-9.00000  
+    ##  1st Qu.: 4.00   1st Qu.: 3.000   1st Qu.: 1.0000   1st Qu.:-1.00000  
+    ##  Median :11.00   Median : 4.000   Median : 1.0000   Median : 1.00000  
+    ##  Mean   :10.22   Mean   : 2.453   Mean   : 0.5879   Mean   :-0.04746  
+    ##  3rd Qu.:17.00   3rd Qu.: 4.000   3rd Qu.: 1.0000   3rd Qu.: 1.00000  
+    ##  Max.   :22.00   Max.   : 4.000   Max.   : 1.0000   Max.   : 2.00000  
+    ##                                                                       
+    ##     V202073           V202110x         InterviewMode      Weight      
+    ##  Min.   :-9.0000   Min.   :-9.0000   Video    : 359   Min.   :0.0083  
+    ##  1st Qu.:-1.0000   1st Qu.: 1.0000   Telephone: 139   1st Qu.:0.3863  
+    ##  Median : 1.0000   Median : 1.0000   Web      :7782   Median :0.6863  
+    ##  Mean   : 0.2389   Mean   : 0.8036                    Mean   :1.0000  
+    ##  3rd Qu.: 2.0000   3rd Qu.: 2.0000                    3rd Qu.:1.2110  
+    ##  Max.   :12.0000   Max.   : 5.0000                    Max.   :6.6507  
+    ##                                                       NA's   :827     
+    ##     Stratum     VarUnit       Age               AgeGroup       Gender    
+    ##  12     : 192   1:4091   Min.   :18.00   18-29      :1003   Male  :3763  
+    ##  30     : 190   2:4173   1st Qu.:37.00   30-39      :1381   Female:4450  
+    ##  21     : 188   3:  16   Median :52.00   40-49      :1199   NA's  :  67  
+    ##  1      : 186            Mean   :51.59   50-59      :1335                
+    ##  25     : 186            3rd Qu.:66.00   60-69      :1562                
+    ##  26     : 185            Max.   :80.00   70 or older:1452                
+    ##  (Other):7153            NA's   :348     NA's       : 348                
+    ##                 RaceEth                         PartyID            Education   
+    ##  White              :5963   Strong democrat         :1961   Less than HS: 376  
+    ##  Black              : 726   Strong republican       :1730   High school :1336  
+    ##  Hispanic           : 762   Independent-democrat    : 975   Post HS     :2790  
+    ##  Asian, NH/PI       : 284   Independent             : 968   Bachelor's  :2055  
+    ##  AI/AN              : 172   Not very strong democrat: 900   Graduate    :1592  
+    ##  Other/multiple race: 271   (Other)                 :1711   NA's        : 131  
+    ##  NA's               : 102   NA's                    :  35                      
+    ##               Income              Income7                 CampaignInterest
+    ##  Under $9,999    : 719   $125k or more:1616   Very much interested:4320   
+    ##  $50,000-59,999  : 546   Under $20k   :1211   Somewhat interested :2890   
+    ##  $100,000-109,999: 506   $20-40k      :1157   Not much interested :1069   
+    ##  $250,000 or more: 449   $40-60k      :1097   NA's                :   1   
+    ##  $80,000-89,999  : 426   $60-80k      :1004                               
+    ##  (Other)         :5018   (Other)      :1579                               
+    ##  NA's            : 616   NA's         : 616                               
+    ##             TrustGovernment              TrustPeople   VotedPres2016
+    ##  Always             :  88   Always             :  52   Yes :6400    
+    ##  Most of the time   :1133   Most of the time   :3842   No  :1854    
+    ##  About half the time:2569   About half the time:2265   NA's:  26    
+    ##  Some of the time   :3674   Some of the time   :1810                
+    ##  Never              : 779   Never              : 292                
+    ##  NA's               :  37   NA's               :  19                
+    ##                                                                     
+    ##  VotedPres2016_selection VotedPres2020 VotedPres2020_selection EarlyVote2020
+    ##  Clinton:3172            Yes :6450     Biden:3267              Yes : 415    
+    ##  Trump  :2746            No  :1039     Trump:2462              No  :6035    
+    ##  Other  : 432            NA's: 791     Other: 152              NA's:1830    
+    ##  NA's   :1930                          NA's :2399                           
+    ##                                                                             
+    ##                                                                             
     ## 
 
 ## Check derived variables for correct coding
@@ -590,19 +591,22 @@ anes_2020 %>% count(TrustPeople, V201237)
     ## 7 <NA>                -8 [-8. Don't know]             2
 
 ``` r
-anes_2020 %>% count(VotedPres2016, V201101)
+anes_2020 %>% count(VotedPres2016, V201101, V201102)
 ```
 
-    ## count: now 5 rows and 3 columns, ungrouped
+    ## count: now 8 rows and 4 columns, ungrouped
 
-    ## # A tibble: 5 × 3
-    ##   VotedPres2016                 V201101     n
-    ##   <fct>                       <dbl+lbl> <int>
-    ## 1 Yes            1 [1. Yes, voted]       3070
-    ## 2 No             2 [2. No, didn't vote]  1001
-    ## 3 <NA>          -9 [-9. Refused]           14
-    ## 4 <NA>          -8 [-8. Don't know]         2
-    ## 5 <NA>          -1 [-1. Inapplicable]    4193
+    ## # A tibble: 8 × 4
+    ##   VotedPres2016                 V201101                 V201102     n
+    ##   <fct>                       <dbl+lbl>               <dbl+lbl> <int>
+    ## 1 Yes           -1 [-1. Inapplicable]    1 [1. Yes, voted]       3330
+    ## 2 Yes            1 [1. Yes, voted]      -1 [-1. Inapplicable]    3070
+    ## 3 No            -1 [-1. Inapplicable]    2 [2. No, didn't vote]   853
+    ## 4 No             2 [2. No, didn't vote] -1 [-1. Inapplicable]    1001
+    ## 5 <NA>          -9 [-9. Refused]        -1 [-1. Inapplicable]      14
+    ## 6 <NA>          -8 [-8. Don't know]     -1 [-1. Inapplicable]       2
+    ## 7 <NA>          -1 [-1. Inapplicable]   -9 [-9. Refused]            8
+    ## 8 <NA>          -1 [-1. Inapplicable]   -8 [-8. Don't know]         2
 
 ``` r
 anes_2020 %>% count(VotedPres2016_selection, V201103)

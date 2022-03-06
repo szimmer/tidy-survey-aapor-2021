@@ -35,6 +35,7 @@ anes_2020 <- anes_in_2020 %>%
     "V200010c", # FULL SAMPLE VARIANCE UNIT
     "V200002", # MODE OF INTERVIEW: PRE-ELECTION INTERVIEW
     "V201006", # PRE: HOW INTERESTED IN FOLLOWING CAMPAIGNS
+    "V201102", # PRE: DID R VOTE FOR PRESIDENT IN 2016
     "V201101", # PRE: DID R VOTE FOR PRESIDENT IN 2016 [REVISED]
     "V201103", # PRE: RECALL OF LAST (2016) PRESIDENTIAL VOTE CHOICE)
     "V201025x", # PRE: SUMMARY: REGISTRATION AND EARLY VOTE STATUS
@@ -175,8 +176,8 @@ anes_2020 <- anes_in_2020 %>%
     ),
     VotedPres2016 = factor(
       case_when(
-        V201101 == 1 ~ "Yes",
-        V201101 == 2 ~ "No",
+        V201101 == 1 | V201102 == 1 ~ "Yes",
+        V201101 == 2 | V201102 == 2 ~ "No",
         TRUE ~ NA_character_
       ),
       levels = c("Yes", "No")
@@ -255,7 +256,7 @@ anes_2020 %>% count(TrustGovernment, V201233)
 
 anes_2020 %>% count(TrustPeople, V201237)
 
-anes_2020 %>% count(VotedPres2016, V201101)
+anes_2020 %>% count(VotedPres2016, V201101, V201102)
 
 anes_2020 %>% count(VotedPres2016_selection, V201103)
 
