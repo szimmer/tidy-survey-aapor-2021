@@ -1,6 +1,6 @@
 ---
 title: "Tidy Survey Analysis in R using the srvyr Package"
-subtitle: "Short Course Day 1 - Categorical Data"
+subtitle: "Workshop Day 1 - Categorical Data"
 author:
    - Stephanie Zimmer, Abt Associates
    - Rebecca Powell, RTI International
@@ -38,7 +38,7 @@ class: inverse center middle
 
 ## Overview
 
-- At the end of this course, you should be able to 
+- At the end of this workshop series, you should be able to 
   - Calculate point estimates and their standard errors with survey data 
       - Proportions, totals, and counts
       - Means, quantiles, and ratios
@@ -54,11 +54,11 @@ class: inverse center middle
 
 
 ---
-## Overview: Course Roadmap
+## Overview: Workshop Series Roadmap
 
 - Get familiar with RStudio Cloud with a warm-up exercise using the tidyverse (today)
 
-- Introduce the survey data we'll be using in the course (today)
+- Introduce the survey data we'll be using in the workshop (today)
 
 - Analysis of categorical data with time for practice (today)
 
@@ -219,7 +219,7 @@ install.packages("srvyr")
 ```
 
 
-- First, we will set-up a design object and later talk about what it means
+- First, we will set-up a design object and talk about what it means in Session 3
 ```{r anes_des, error=FALSE, warning=FALSE}
 library(survey) # for survey analysis
 library(srvyr) # for tidy survey analysis
@@ -364,7 +364,7 @@ anes_des %>%
 
 - Open CategoricalExercises.Rmd and work through Part 1
 
-- We will take 15 minutes. Use this time for the exercises and a break
+- We will take 15 minutes. Use this time for the exercises and questions.
 
 
 ---
@@ -496,7 +496,7 @@ filter(anes_des, Weight>0) %>%
 
 - Open CategoricalExercises.Rmd and work through Part 2
 
-- We will take 15 minutes. Use this time for the exercises and a break
+- We will take 15 minutes. Use this time for the exercises and questions.
 
 ---
 class: inverse center middle
@@ -513,9 +513,9 @@ class: inverse center middle
 ---
 ## Thank You!
 
-### We hope you learned a lot in this short course!
+### We hope you learned a lot in this session!
 
-Please let us know if you have any feedback on this course. All feedback is welcome!
+Please let us know if you have any feedback on this workshop. All feedback is welcome!
 
 
 ## Questions?
@@ -523,12 +523,12 @@ Please let us know if you have any feedback on this course. All feedback is welc
 ---
 ## Sources
 
-- <font size="2">The American National Election Studies (https://electionstudies.org/). These materials are based on work supported by the National Science Foundation under grant numbers SES 1444721, 2014-2017, the University of Michigan, and Stanford University.  </font>
+- <font size="3">The American National Election Studies (https://electionstudies.org/). These materials are based on work supported by the National Science Foundation under grant numbers SES 1444721, 2014-2017, the University of Michigan, and Stanford University.  </font>
 
-- <font size="2">Horst AM, Hill AP, Gorman KB (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. R package version 0.1.0. https://allisonhorst.github.io/palmerpenguins/ </font>
+- <font size="3">Horst AM, Hill AP, Gorman KB (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. R package version 0.1.0. https://allisonhorst.github.io/palmerpenguins/ </font>
 
-- <font size="2">T. Lumley (2020) "survey: analysis of complex survey samples". R package version 4.0. https://r-survey.r-forge.r-project.org/survey/ </font>
+- <font size="3">T. Lumley (2020) "survey: analysis of complex survey samples". R package version 4.0. https://r-survey.r-forge.r-project.org/survey/ </font>
 
-- <font size="2">Greg Freedman Ellis and Ben Schneider (2020). srvyr: 'dplyr'-Like Syntax for Summary Statistics of Survey Data. R package version 1.0.0. https://CRAN.R-project.org/package=srvyr </font>
+- <font size="3">Greg Freedman Ellis and Ben Schneider (2020). srvyr: 'dplyr'-Like Syntax for Summary Statistics of Survey Data. R package version 1.0.0. https://CRAN.R-project.org/package=srvyr </font>
 
-- <font size="2">Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.5. https://CRAN.R-project.org/package=dplyr </font>
+- <font size="3">Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.5. https://CRAN.R-project.org/package=dplyr </font>
