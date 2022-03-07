@@ -1,0 +1,542 @@
+---
+title: "Tidy Survey Analysis in R using the srvyr Package"
+subtitle: "Workshop Day 1 - Categorical Data"
+author:
+   - Stephanie Zimmer, Abt Associates
+   - Rebecca Powell, RTI International
+   - Isabella Velásquez, RStudio
+date: "TBD 2022"
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer-mod.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, tidy = FALSE)
+```
+
+class: inverse center middle
+# Introduction
+
+---
+
+
+```{css sizesetup, echo = FALSE}
+.small .remark-code { /*Change made here*/
+  font-size: 80% !important;
+}
+.smaller .remark-code { /*Change made here*/
+  font-size: 70% !important;
+}
+```
+
+## Overview
+
+- At the end of this workshop series, you should be able to 
+  - Calculate point estimates and their standard errors with survey data 
+      - Proportions, totals, and counts
+      - Means, quantiles, and ratios
+  - Perform t-tests and chi-squared tests
+  - Fit regression models
+  - Specify a survey design in R to create a survey object
+  
+- We will not be going over the following but provide some resources at the end
+  - Weighting (calibration, post-stratification, raking, etc.)
+  - Survival analysis
+  - Nonlinear models
+
+
+
+---
+## Overview: Workshop Series Roadmap
+
+- Get familiar with RStudio Cloud with a warm-up exercise using the tidyverse (today)
+
+- Introduce the survey data we'll be using in the workshop (today)
+
+- Analysis of categorical data with time for practice (today)
+
+- Analysis of continuous data with time for practice (day 2)
+
+- Survey design objects, constructing replicate weights, and creating derived variables (day 3)
+
+
+---
+## Logistics
+
+- We will be using RStudio Cloud today to ensure everyone has access
+
+    - Sign-up for a free RStudio Cloud account 
+    - Access the project and files via link in email and Zoom chat
+    - Click "START" to open the project and get started
+    - Rstudio Cloud has the same features and appearance as RStudio for ease of use
+
+- All slides and code are available on GitHub: https://github.com/tidy-survey-r/tidy-survey-short-course
+
+???
+Github repo is for future reference, all material on RStudio cloud
+
+---
+## Intro to RStudio Cloud: Penguins!!
+
+- Using `palmerpenguins` data for warm-up exercises
+
+- Data were collected and made available by Dr. Kristen Gorman and the Palmer Station, Antarctica LTER, a member of the Long Term Ecological Research Network.
+
+- Access data through `palmerpenguins` package https://github.com/allisonhorst/palmerpenguins/
+
+
+####If you are using your own RStudio environment:
+- Make sure you have `tidyverse`, `here`, and `palmerpenguins` installed
+
+```{r inst_packages, error=FALSE, warning=FALSE, eval=FALSE}
+# Run package installation if you don't have these packages already
+# As a reminder, installing takes package from internet to your computer 
+# and only needs to be done once, not each session
+
+install.packages(c("tidyverse", "here", "palmerpenguins"))
+```
+
+---
+## Intro to RStudio Cloud: Penguins!!
+
+- Load `tidyverse`, `here`, and `palmerpenguins`
+
+- Look at the penguins dataset using `glimpse`
+
+```{r load_pack1, error=FALSE, warning=FALSE}
+library(tidyverse) # for tidyverse
+library(here) # for file paths
+library(palmerpenguins) # for warm-up data
+glimpse(penguins)
+```
+
+---
+## Warm-up Exercises: WarmUpExercises.Rmd
+
+- <b>Let's open RStudio cloud and do some warm-up examples</b>
+
+- Take 10 minutes to set up RStudio Cloud and do these exercises on your own. We will then go over together
+
+- Explore the penguins data
+  - How many penguins of each species are there? 
+  - How many penguins of each species and sex are there? 
+
+
+---
+## Ex. 1: How many penguins of each species are there? 
+
+```{r peng1}
+penguins %>%
+   count(species)
+
+penguins %>%
+   group_by(species) %>%
+   summarise(
+      n=n(), .groups="drop"
+   )
+```
+
+???
+- Using `count` we see there are 3 different species and the number of penguins for each species
+---
+## Ex. 2: How many penguins of each species and sex are there?
+
+```{r peng2}
+penguins %>%
+   count(species, sex)
+```
+???
+- `count` can take more than one variable to get a cross-tabs between the two variables
+
+---
+class: inverse center middle
+# Survey Datasets
+---
+## American National Election Studies (ANES) 2016 
+
+- Pre and post election surveys
+
+- Fielded almost every 2 years since 1948
+
+- Topics include voter registration status, candidate preference, opinions on country and government, party and ideology affiliation, opinions on policy, news sources, and more
+
+- Collaboration of Stanford, University of Michigan - funding by the National Science Foundation
+
+- <b>Target Population</b>: US citizens, 18 and older living in US 
+
+- <b>Mode</b>: FTF with CASI and Web
+
+- <b>Sample Information</b>: Pseudo-strata and pseudo-cluster included for variance estimation
+
+https://electionstudies.org/
+
+???
+- We have subset the columns of this data and created derived variables, code in repository
+- Chose not to use 2020 data because it is still preliminary
+
+---
+class: inverse center middle
+# Categorical descriptive data analysis
+---
+## Overview of Survey Analysis using `srvyr` Package
+
+1. Create a `tbl_svy` object using: `as_survey_design` or `as_survey_rep`
+
+2. Subset data (if needed) using `filter` (subpopulations)
+
+3. Specify domains of analysis using `group_by` 
+
+4. Within `summarize`, specify variables to calculate including means, totals, proportions, quantiles and more
+
+
+<b>Note: We will be teaching this in the reverse order!!!</b>
+---
+## Weighted Analysis for Categorical Variable
+
+- Functions to use within `summarize` after `group_by`
+   - survey_mean
+   - survey_total
+
+- Functions to get counts
+  - survey_count
+
+???
+
+- we use the same mean and total functions as with continuous variables
+- `survey_count` is new
+    - has a similar structure as the standard (non-survey) version of count
+
+
+---
+## Set-up for Analysis
+- `srvyr` package uses tidy-syntax but uses the `survey` package behind it to do calculations
+
+- If using your own RStudio environment, install both packages:
+```{r inst_srv, eval=FALSE}
+# Install survey and srvyr packages
+
+remotes::install_github("bschneidr/survey", ref = "c217689")
+install.packages("srvyr")
+```
+
+
+- First, we will set-up a design object and talk about what it means in Session 3
+```{r anes_des, error=FALSE, warning=FALSE}
+library(survey) # for survey analysis
+library(srvyr) # for tidy survey analysis
+
+anes <- read_rds(here("Data", "anes.rds")) %>%
+   mutate(Weight=Weight/sum(Weight)*224059005) 
+# adjust weight to sum to citizen pop, 18+ in Nov 2016 per ANES methodology documentation
+anes_des <- anes %>%
+   as_survey_design(weights = Weight,
+                    strata = Stratum,
+                    ids = VarUnit,
+                    nest = TRUE)
+
+```
+???
+- need to install github version of survey package if you want CIs with quantiles
+- American National Election Studies
+- provides weights that sum to the sample, but we want to get population estimates
+    - need to adjust the weight to get it to the population count
+- we will cover setting up the sample design object later
+
+---
+## `survey_count` Syntax
+
+- `survey_count` functions similarly to `count` in that it is <b>NOT</b> called within `summarize`
+
+- Produces weighted counts and variance of your choice of those counts
+```{r survey_count_syn, eval=FALSE, tidy=FALSE}
+survey_count(
+  x,
+  ...,
+  wt = NULL,
+  sort = FALSE,
+  name = "n",
+  .drop = dplyr::group_by_drop_default(x),
+  vartype = c("se", "ci", "var", "cv")
+)
+```
+???
+- similar to count in that it takes one or many variables
+- can change the variance type
+
+---
+## `survey_count` Example
+
+- Cross-tab of population in each age group and gender
+```{r survey_count_ex}
+anes_des %>%
+  survey_count(AgeGroup, name="N")
+
+```
+???
+- `survey_count` is placed on its own like `count`
+- it does NOT go in a `summarize` function
+- can take multiple variables
+- can change the output count name, `n` is the default
+
+---
+## `survey_mean` and `survey_total` within `summarize`
+- Specify the sample design,
+- then specify the crosstab in `group_by`,
+- then `survey_mean` used with no x (variable) calculates a proportion of groups within `summarize`, or
+- `survey_total` used with no x (variable) calculates a population count estimate within `summarize`
+
+---
+## `survey_mean` and `survey_total` Examples
+
+Looking at population by age group as done with `survey_count`.
+```{r survey_p_ex1}
+anes_des %>%
+  group_by(AgeGroup) %>%
+  summarize(
+    p=survey_mean(),
+    N=survey_total(),
+    n=unweighted(n()), # this gets unweighted counts aka sample sizes
+    .groups="drop" # summarize option to remove groups
+  )
+```
+???
+- to get proportions we use `group_by` and `survey_mean`
+- also use `survey_total` to get a population count estimate as before
+
+---
+## Conditional proportions with more than one group
+
+- Specifying more than one group calculates conditional proportions
+- Example: people voting in 2012 and 2016
+
+```{r survey_p_cond, tidy=FALSE}
+anes_des %>%
+  filter(!is.na(VotedPres2012), !is.na(VotedPres2016)) %>%
+  group_by(VotedPres2012, VotedPres2016) %>%
+  summarize(
+    p=survey_mean(),
+    N=survey_total(),
+    n=unweighted(n()), 
+    .groups="drop"
+  )
+```
+???
+- We will talk more about this next time but filter after creating design object to subset data
+- Note that this is the proportion of voting in 2016 by whether people voted in 2012
+- What if we don't want conditional proportions?
+
+---
+## Joint proportions with more than one group
+
+- Specify an interaction to get joint distribution - use `interact` within `group_by`
+- Example: people voting in 2012 and 2016
+
+```{r survey_p_joint}
+anes_des %>%
+  filter(!is.na(VotedPres2012), !is.na(VotedPres2016)) %>%
+  group_by(interact(VotedPres2016, VotedPres2012)) %>% #<<
+  summarize(
+    p=survey_mean(),
+    N=survey_total(),
+    .groups="drop"
+  )
+```
+???
+- We add an interaction for the groups
+- This outputs the joint distribution
+
+---
+## Proportions with Design Effects
+
+```{r survey_p_deff}
+anes_des %>%
+  filter(!is.na(VotedPres2012), !is.na(VotedPres2016)) %>%
+  group_by(VotedPres2012, VotedPres2016) %>%
+  summarize(
+    p=survey_mean(deff=TRUE),
+    N=survey_total()
+  )
+```
+???
+- Use `deff=TRUE` option in the `survey_mean` function
+
+---
+## Practice on your own
+
+- Open CategoricalExercises.Rmd and work through Part 1
+
+- We will take 15 minutes. Use this time for the exercises and questions.
+
+
+---
+class: inverse center middle
+# Categorical data testing and modeling
+
+---
+## `svychisq` Syntax
+
+- Testing and modeling is done with the `survey` package
+- You can use the same design object
+
+```{r svychisq_syn, eval=FALSE}
+svychisq(formula,
+         design, 
+         statistic = c("F",  "Chisq", "Wald", "adjWald", "lincom", "saddlepoint"),
+         na.rm=TRUE,
+         ...)
+                       
+```
+???
+- when we want to test categorical distributions we use `svychisq`
+- it takes a formula, and the survey design data
+
+---
+## `svychisq` Example 1: Function Defaults
+
+- How often can you trust the federal gov't to do what is right?
+- How often can you trust other people?
+
+```{r svychisq_ex1}
+anes_des %>%
+   svychisq(design=.,
+            formula=~TrustPeople +TrustGovernment)
+
+
+```
+???
+- We want to compare the distributions of these two questions
+
+---
+## `svychisq` Example 2: Wald Statistic
+
+- How often can you trust the federal gov't to do what is right?
+- Who did you vote for? Clinton, Trump, or Other
+
+```{r svychisq_ex2}
+anes_des %>%
+   svychisq(design=.,
+            formula=~TrustGovernment +VotedPres2016_selection,
+            statistic="Wald")
+
+
+```
+???
+- Can use different statistics
+
+
+---
+## Refresher on formula notation
+Symbol | Example | Meaning
+-|-|-
++|`+X`|include this variable
+-|`-X`|delete this variable
+:|`X:Z`|include the interaction between these variables
+* |`X*Z`|include these variables and the interactions between them
+^n |`(X+Z+Y)^3`|include these variables and all interactions up to n way
+I |`I(X-Z)`| as-as: include a new variable which is the difference of these variables
+
+---
+## Formula notation - knowledge check
+
+I want to model the following:
+   
+$$mpg_i=\beta_0+\beta_1cyl_{i}+\beta_2disp_{i}+\beta_3hp_{i}+\beta_4cyl_{i}disp_{i}+\beta_5cyl_{i}hp_{i}+\beta_6disp_{i}hp_{i}+\epsilon_i$$
+      
+How can you write this formula? Select all that apply:
+
+1. `mpg~cyl:disp:hp`
+2. `mpg~(cyl+disp+hp)^2`
+3. `mpg~cyl+disp+hp+cyl:disp+cyl:hp+disp:hp`
+4. `mpg~cyl*disp*hp`
+5. `mpg~cyl*disp+cyl*hp+disp*hp`
+
+---
+## Formula notation - knowledge check (solution)
+
+I want to model the following:
+   
+$$mpg_i=\beta_0+\beta_1cyl_{i}+\beta_2disp_{i}+\beta_3hp_{i}+\beta_4cyl_{i}disp_{i}+\beta_5cyl_{i}hp_{i}+\beta_6disp_{i}hp_{i}+\epsilon_i$$
+      
+How can you write this formula? Select all that apply:
+
+1. `mpg~cyl:disp:hp` - no, this only has the interactions
+2. `mpg~(cyl+disp+hp)^2` - yes
+3. `mpg~cyl+disp+hp+cyl:disp+cyl:hp+disp:hp` - yes
+4. `mpg~cyl*disp*hp` - no, this also has the 3-way interaction
+5. `mpg~cyl*disp+cyl*hp+disp*hp` - yes
+
+There may be other ways as well!!!
+
+
+---
+## Logistic regression with `svyglm`
+
+
+```{r logisticsyntax, eval=FALSE}
+svyglm(formula, # response ~ terms
+       design,
+       na.action, #default is na.omit
+       family = quasibinomial, # use this to avoid warning about non-integers
+       ....)
+```
+
+---
+## Example logistic regression
+- Predicting trust in government by who someone voted in 2016
+
+```{r logisticexamp}
+filter(anes_des, Weight>0) %>%
+   svyglm(design=.,
+            formula=TrustGovernment~ VotedPres2016_selection,
+            family = quasibinomial) %>%
+   summary()
+```
+
+---
+## Practice on your own
+
+- Open CategoricalExercises.Rmd and work through Part 2
+
+- We will take 15 minutes. Use this time for the exercises and questions.
+
+---
+class: inverse center middle
+# Closing
+---
+## Resources for more learning
+
+- https://cran.r-project.org/web/packages/srvyr/vignettes/srvyr-vs-survey.html
+
+- https://r-survey.r-forge.r-project.org/survey/ 
+  - Includes more advanced modeling
+
+
+---
+## Thank You!
+
+### We hope you learned a lot in this session!
+
+Please let us know if you have any feedback on this workshop. All feedback is welcome!
+
+
+## Questions?
+
+---
+## Sources
+
+- <font size="3">The American National Election Studies (https://electionstudies.org/). These materials are based on work supported by the National Science Foundation under grant numbers SES 1444721, 2014-2017, the University of Michigan, and Stanford University.  </font>
+
+- <font size="3">Horst AM, Hill AP, Gorman KB (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. R package version 0.1.0. https://allisonhorst.github.io/palmerpenguins/ </font>
+
+- <font size="3">T. Lumley (2020) "survey: analysis of complex survey samples". R package version 4.0. https://r-survey.r-forge.r-project.org/survey/ </font>
+
+- <font size="3">Greg Freedman Ellis and Ben Schneider (2020). srvyr: 'dplyr'-Like Syntax for Summary Statistics of Survey Data. R package version 1.0.0. https://CRAN.R-project.org/package=srvyr </font>
+
+- <font size="3">Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021). dplyr: A Grammar of Data Manipulation. R package version 1.0.5. https://CRAN.R-project.org/package=dplyr </font>
