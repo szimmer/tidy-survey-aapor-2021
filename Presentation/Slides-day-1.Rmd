@@ -27,7 +27,7 @@ class: inverse center middle
 ---
 
 
-```{css, echo = FALSE}
+```{css sizesetup, echo = FALSE}
 .small .remark-code { /*Change made here*/
   font-size: 80% !important;
 }
@@ -122,9 +122,11 @@ glimpse(penguins)
 
 - <b>Let's open RStudio cloud and do some warm-up examples</b>
 
+- Take 10 minutes to set up RStudio Cloud and do these exercises on your own. We will then go over together
+
 - Explore the penguins data
-  - How many penguins of each species are there? <i>We will do this one together</i>
-  - How many penguins of each species and sex are there? Hint: use `count`
+  - How many penguins of each species are there? 
+  - How many penguins of each species and sex are there? 
 
 
 ---
@@ -133,6 +135,12 @@ glimpse(penguins)
 ```{r peng1}
 penguins %>%
    count(species)
+
+penguins %>%
+   group_by(species) %>%
+   summarise(
+      n=n(), .groups="drop"
+   )
 ```
 
 ???
@@ -483,7 +491,7 @@ svyglm(formula, # response ~ terms
 ## Example logistic regression
 - Predicting trust in government by who someone voted in 2016
 
-```{r}
+```{r logisticexamp}
 filter(anes_des, Weight>0) %>%
    svyglm(design=.,
             formula=TrustGovernment~ VotedPres2016_selection,

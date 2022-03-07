@@ -141,9 +141,11 @@ glimpse(penguins)
 
 - &lt;b&gt;Let's open RStudio cloud and do some warm-up examples&lt;/b&gt;
 
+- Take 10 minutes to set up RStudio Cloud and do these exercises on your own. We will then go over together
+
 - Explore the penguins data
-  - How many penguins of each species are there? &lt;i&gt;We will do this one together&lt;/i&gt;
-  - How many penguins of each species and sex are there? Hint: use `count`
+  - How many penguins of each species are there? 
+  - How many penguins of each species and sex are there? 
 
 
 ---
@@ -153,6 +155,23 @@ glimpse(penguins)
 ```r
 penguins %&gt;%
    count(species)
+```
+
+```
+## # A tibble: 3 x 2
+##   species       n
+##   &lt;fct&gt;     &lt;int&gt;
+## 1 Adelie      152
+## 2 Chinstrap    68
+## 3 Gentoo      124
+```
+
+```r
+penguins %&gt;%
+   group_by(species) %&gt;%
+   summarise(
+      n=n(), .groups="drop"
+   )
 ```
 
 ```
