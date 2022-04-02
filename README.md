@@ -1,3 +1,5 @@
+A new version of this course is at: https://github.com/tidy-survey-r/tidy-survey-short-course
+
 # Tidy Survey Analysis in R using the srvyr Package
 Materials for [AAPOR short course](https://www.aapor.org/Conference-Events/Annual-Meeting/Short-Courses.aspx) on Tidy Survey Analysis in R using the `srvyr` Package in May 2021
 
